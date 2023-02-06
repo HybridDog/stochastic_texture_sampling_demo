@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <assert.h>
+#include <iostream>
+
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
+//~ #include <SDL2/SDL_opengl.h>
 //~ #include <GL/gl.h>
 #include <common.hpp>
+
+#include "renderer.hpp"
 
 
 int main()
@@ -12,6 +16,8 @@ int main()
 		SDL_WINDOW_OPENGL)};
 	assert(window);
 	SDL_GLContext context{SDL_GL_CreateContext(window)};
+	//~ std::cout << "Initing renderer\n";
+	//~ Renderer renderer{800, 600};
 	for(;;) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -26,9 +32,10 @@ int main()
 				return 0;
 			}
 		}
-		glViewport(0, 0, 800, 600);
-		glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+        glViewport(0, 0, 800, 600);
+        glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+		//~ renderer.render();
 		SDL_GL_SwapWindow(window);
 	}
 	return 0;

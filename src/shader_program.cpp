@@ -62,6 +62,7 @@ bool check_shader_link_status(const GLuint &shader_prog,
 ShaderProgram::ShaderProgram(const std::string &path_vertex_shader,
 	const std::string &path_fragment_shader)
 {
+	std::cout << "ShaderProgram::ShaderProgram\n";
 	// Load and compile the vertex shader
 	GLuint vertex_shader{glCreateShader(GL_VERTEX_SHADER)};
 	const std::string vertex_shader_code{read_file(path_vertex_shader)};
