@@ -1,5 +1,6 @@
 #include <string>
 #include <stdexcept>
+#include <iostream>
 
 #include "texture.hpp"
 #include "image_file.hpp"

@@ -18,5 +18,5 @@ private:
 	GLuint m_vao{0};
 	//~ ShaderProgram m_shader_program_default_sampling{PROJECT_DIRECTORY "/shaders/vertex.glsl", PROJECT_DIRECTORY "/shaders/fragment_init.glsl"};
 	ShaderProgram m_shader_program_default_sampling{"shaders/vertex.glsl", "shaders/fragment_default_sampling.glsl"};
-	Texture m_texture{Texture("/data/moontest_stone.png")};
+	Texture m_texture{Texture("data/moontest_stone.png")};
 };
