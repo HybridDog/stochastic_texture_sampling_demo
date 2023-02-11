@@ -1,6 +1,5 @@
 # TODO
 
-* Create shaders to show a texture
 * Stochastic texture sampling, at first without histogram transformation for
   simplicity
 * Make it work with emscripten and add the html to load it

@@ -1,9 +1,10 @@
 #version 330 core
 out vec4 FragColor;
 
-in vec2 TexCoord;
-
 uniform sampler2D myTexture;
+uniform vec2 textureResolution;
+uniform vec2 pos0;
+uniform float scale;
 
 
 // from https://www.shadertoy.com/view/ttByDw
@@ -20,7 +21,8 @@ vec3 LinearToSRGB(vec3 rgb)
 
 void main()
 {
-	vec4 col = texture(myTexture, TexCoord);
+	vec2 uv = pos0 + gl_FragCoord.xy / (textureResolution * scale);
+	vec4 col = texture(myTexture, uv);
 	col.rgb = LinearToSRGB(col.rgb);
 	FragColor = col;
 }

@@ -10,6 +10,7 @@ add_executable(Prog
 	src/main.cpp
 	src/image_file.cpp
 	src/renderer.cpp
+	src/camera.cpp
 	src/shader_program.cpp
 	src/texture.cpp
 )

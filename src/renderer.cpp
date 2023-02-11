@@ -20,10 +20,10 @@ Renderer::Renderer(int width, int height)
 	glBindVertexArray(m_vao);
 
 	std::array<f32, 20> vertices_triangle{
-		-1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
-		1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
-		-1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-		1.0f,  1.0f, 0.0f,  1.0f, 1.0f
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f,
+		-1.0f,  1.0f, 0.0f,
+		1.0f,  1.0f, 0.0f
 	};
 	// Vertex Buffer Object
 	GLuint vbo;
@@ -33,15 +33,9 @@ Renderer::Renderer(int width, int height)
 		vertices_triangle.data(), GL_STATIC_DRAW);
 	// Specify how the bound buffer (vbo) is interpreted: index, size, type,
 	// …, stride, …
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(f32), (void*)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(f32),
-		(void*)(3 * sizeof(f32)));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
 	glEnableVertexAttribArray(0);  // attribarray stored in vao
-	glEnableVertexAttribArray(1);  // attribarray stored in vao
 	glBindVertexArray(0);
-
-	// Load the example texture
-	//~ Texture texture{PROJECT_DIRECTORY "/data/example_texture.jpg"};
 }
 
 void Renderer::render()
@@ -57,6 +51,16 @@ void Renderer::render()
 	glBindVertexArray(m_vao);
 	glActiveTexture(GL_TEXTURE0);
 	m_texture.bind();
+	std::array<float, 2> texture_resolution{
+		static_cast<float>(m_texture.getWidth()),
+		static_cast<float>(m_texture.getHeight())
+	};
 	m_shader_program_default_sampling.setUniform("myTexture", 0);
+	m_shader_program_default_sampling.setUniform("textureResolution",
+		texture_resolution);
+	std::array<float, 2> cam_pos{m_camera.getPos()};
+	//~ m_shader_program_default_sampling.setUniform("pos0", m_camera.getPos());
+	m_shader_program_default_sampling.setUniform("pos0", cam_pos);
+	m_shader_program_default_sampling.setUniform("scale", m_camera.getZoom());
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
