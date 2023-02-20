@@ -4,7 +4,13 @@ project(prog)
 #~ add_compile_options(-Ofast -march=native -pipe -Wall -Wextra -Wnull-dereference
 	#~ -Wmisleading-indentation -Wlogical-op -Wno-unused-parameter)
 add_compile_options(-g -pipe -Wall -Wextra -Wnull-dereference
-	-Wmisleading-indentation -Wlogical-op -Wno-unused-parameter)
+	-Wmisleading-indentation -Wno-unused-parameter)
+if(EMSCRIPTEN)
+	# emcmake cmake -G Ninja -B build
+	# cmake --build build/
+	set(CMAKE_EXECUTABLE_SUFFIX .html)
+	add_compile_options(-sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -sSDL2_IMAGE_FORMATS=["png","jpg"])
+endif()
 
 add_executable(Prog
 	src/main.cpp
