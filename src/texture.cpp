@@ -39,7 +39,7 @@ void load_image_file(const std::string &path, int &width, int &height)
 	ImageFile img{path};
 	width = img.getWidth();
 	height = img.getHeight();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8, width, height, 0, GL_RGBA,
 		GL_UNSIGNED_BYTE, img.getPixels());
 }
 

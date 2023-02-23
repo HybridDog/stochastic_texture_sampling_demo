@@ -1,15 +1,15 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(prog)
 
-#~ add_compile_options(-Ofast -march=native -pipe -Wall -Wextra -Wnull-dereference
-	#~ -Wmisleading-indentation -Wlogical-op -Wno-unused-parameter)
-add_compile_options(-g -pipe -Wall -Wextra -Wnull-dereference
+add_compile_options(-std=c++20 -g -pipe -Wall -Wextra -Wnull-dereference
 	-Wmisleading-indentation -Wno-unused-parameter)
 if(EMSCRIPTEN)
-	# emcmake cmake -G Ninja -B build
-	# cmake --build build/
+	# emcmake cmake -G Ninja -B build_emscripten
+	# cmake --build build_emscripten/
+	# cd build_emscripten/ && python3 -m http.server 9000
 	set(CMAKE_EXECUTABLE_SUFFIX .html)
-	add_compile_options(-sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -sSDL2_IMAGE_FORMATS=["png","jpg"])
+	add_compile_options(-sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -sSDL2_IMAGE_FORMATS=["png","jpg"] -fwasm-exceptions)
+	add_link_options(-fwasm-exceptions --preload-file ../data@data -sMAX_WEBGL_VERSION=2 -sMIN_WEBGL_VERSION=2 --use-preload-plugins)
 endif()
 
 add_executable(Prog

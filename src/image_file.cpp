@@ -12,14 +12,14 @@ ImageFile::ImageFile(const std::string &path):
 	u32 rmask = 0xff000000;
 	u32 gmask = 0x00ff0000;
 	u32 bmask = 0x0000ff00;
-	u32 amask = 0x00000000;
+	u32 amask = 0x000000ff;
 #else
 	u32 rmask = 0x000000ff;
 	u32 gmask = 0x0000ff00;
 	u32 bmask = 0x00ff0000;
-	u32 amask = 0x00000000;
+	u32 amask = 0xff000000;
 #endif
-	SDL_Surface *convert{SDL_CreateRGBSurface(0, m_surface->w, m_surface->h, 24,
+	SDL_Surface *convert{SDL_CreateRGBSurface(0, m_surface->w, m_surface->h, 32,
 		rmask, gmask, bmask, amask)};
 	if (convert == nullptr)
 		throw std::runtime_error("SDL_CreateRGBSurface has failed");
