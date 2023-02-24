@@ -14,7 +14,7 @@
 
 struct Context {
 	SDL_Window *window;
-	Renderer renderer{800, 600};
+	Renderer renderer{1500, 800};
 	std::set<int> held_keys{};
 };
 
@@ -79,7 +79,7 @@ void emscripten_loop(void *arg)
 
 int main()
 {
-	SDL_Window *window{SDL_CreateWindow("mein prog", 0, 0, 800, 600,
+	SDL_Window *window{SDL_CreateWindow("mein prog", 0, 0, 1500, 800,
 		SDL_WINDOW_OPENGL)};
 	assert(window);
 	//~ SDL_GLContext context{SDL_GL_CreateContext(window)};

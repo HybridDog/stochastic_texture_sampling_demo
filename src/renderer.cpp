@@ -17,13 +17,17 @@ Renderer::Renderer(int width, int height)
 
 	// Vertex Array Object; associates attribointers and VBOs
 	glGenVertexArrays(1, &m_vao);
-	glBindVertexArray(m_vao);
+}
 
+void Renderer::setRenderRect(const std::array<float, 2> &pos1,
+	const std::array<float, 2> &pos2)
+{
+	glBindVertexArray(m_vao);
 	std::array<f32, 20> vertices_triangle{
-		-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f,
-		-1.0f,  1.0f, 0.0f,
-		1.0f,  1.0f, 0.0f
+		pos1[0], pos1[1], 0.0f,
+		pos2[0], pos1[1], 0.0f,
+		pos1[0], pos2[1], 0.0f,
+		pos2[0], pos2[1], 0.0f
 	};
 	// Vertex Buffer Object
 	GLuint vbo;
@@ -47,20 +51,37 @@ void Renderer::render()
 	glViewport(0, 0, m_width, m_height);
 	glClearColor(0.2f, 0.5f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	m_shader_program_default_sampling.use();
-	glBindVertexArray(m_vao);
-	glActiveTexture(GL_TEXTURE0);
-	m_texture.bind();
+
 	std::array<float, 2> texture_resolution{
 		static_cast<float>(m_texture.getWidth()),
 		static_cast<float>(m_texture.getHeight())
 	};
+	std::array<float, 2> cam_pos{m_camera.getPos()};
+
+	// Draw with usual texture sampling
+	m_shader_program_default_sampling.use();
+	setRenderRect({-1.0f, -1.0f}, {0.0f, 1.0f});
+	glBindVertexArray(m_vao);
+	glActiveTexture(GL_TEXTURE0);
+	m_texture.bind();
 	m_shader_program_default_sampling.setUniform("myTexture", 0);
 	m_shader_program_default_sampling.setUniform("textureResolution",
 		texture_resolution);
-	std::array<float, 2> cam_pos{m_camera.getPos()};
 	//~ m_shader_program_default_sampling.setUniform("pos0", m_camera.getPos());
 	m_shader_program_default_sampling.setUniform("pos0", cam_pos);
 	m_shader_program_default_sampling.setUniform("scale", m_camera.getZoom());
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	// Draw with stochastic texture sampling
+	m_shader_program_stochastic_sampling.use();
+	setRenderRect({0.0f, -1.0f}, {1.0f, 1.0f});
+	glBindVertexArray(m_vao);
+	glActiveTexture(GL_TEXTURE0);
+	m_texture.bind();
+	m_shader_program_stochastic_sampling.setUniform("myTexture", 0);
+	m_shader_program_stochastic_sampling.setUniform("textureResolution",
+		texture_resolution);
+	m_shader_program_stochastic_sampling.setUniform("pos0", cam_pos);
+	m_shader_program_stochastic_sampling.setUniform("scale", m_camera.getZoom());
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

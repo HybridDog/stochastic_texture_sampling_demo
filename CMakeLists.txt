@@ -10,6 +10,7 @@ if(EMSCRIPTEN)
 	set(CMAKE_EXECUTABLE_SUFFIX .html)
 	add_compile_options(-sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -sSDL2_IMAGE_FORMATS=["png","jpg"] -fwasm-exceptions)
 	add_link_options(-fwasm-exceptions --preload-file ../data@data -sMAX_WEBGL_VERSION=2 -sMIN_WEBGL_VERSION=2 --use-preload-plugins)
+	configure_file(src/web/index.html index.html COPYONLY)
 endif()
 
 add_executable(Prog

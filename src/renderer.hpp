@@ -6,6 +6,12 @@
 #include "texture.hpp"
 #include "camera.hpp"
 
+#ifdef __EMSCRIPTEN__
+#define DATA_PATH "/data"
+#else
+#define DATA_PATH "./data"
+#endif
+
 
 class Renderer {
 public:
@@ -15,16 +21,20 @@ public:
 	Camera &getCamera() { return m_camera; }
 
 private:
+	// Set the portion of the frame which is rendered to.
+	// pos1 and pos2 are in [-1, 1]^2
+	void setRenderRect(const std::array<float, 2> &pos1,
+		const std::array<float, 2> &pos2);
+
 	int m_width{0};
 	int m_height{0};
 	Camera m_camera{Camera()};
 	GLuint m_vao{0};
-	//~ ShaderProgram m_shader_program_default_sampling{PROJECT_DIRECTORY "/shaders/vertex.glsl", PROJECT_DIRECTORY "/shaders/fragment_init.glsl"};
-#ifdef __EMSCRIPTEN__
-	ShaderProgram m_shader_program_default_sampling{"/data/shaders/vertex.glsl", "/data/shaders/fragment_default_sampling.glsl"};
-	Texture m_texture{Texture("/data/moontest_stone.png")};
-#else
-	ShaderProgram m_shader_program_default_sampling{"data/shaders/vertex.glsl", "data/shaders/fragment_default_sampling.glsl"};
-	Texture m_texture{Texture("data/moontest_stone.png")};
-#endif
+	ShaderProgram m_shader_program_default_sampling{
+		DATA_PATH "/shaders/vertex.glsl",
+		DATA_PATH "/shaders/fragment_default_sampling.glsl"};
+	ShaderProgram m_shader_program_stochastic_sampling{
+		DATA_PATH "/shaders/vertex.glsl",
+		DATA_PATH "/shaders/fragment_stochastic_sampling.glsl"};
+	Texture m_texture{Texture(DATA_PATH "/moontest_stone.png")};
 };
