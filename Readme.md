@@ -10,3 +10,4 @@
 * Fill the whole window instead of using a fixed resolution
 * Improve the user interaction (key combinations, etc.)
 * Bundle everything into a single html file
+* Support high bit depth and wide gamut images

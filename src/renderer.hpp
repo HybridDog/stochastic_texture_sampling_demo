@@ -4,6 +4,7 @@
 
 #include "shader_program.hpp"
 #include "texture.hpp"
+#include "texture_stochastic.hpp"
 #include "camera.hpp"
 
 #ifdef __EMSCRIPTEN__
@@ -36,5 +37,7 @@ private:
 	ShaderProgram m_shader_program_stochastic_sampling{
 		DATA_PATH "/shaders/vertex.glsl",
 		DATA_PATH "/shaders/fragment_stochastic_sampling.glsl"};
-	Texture m_texture{Texture(DATA_PATH "/moontest_stone.png", false)};
+	Texture m_texture{Texture(DATA_PATH "/sumpf_cobble.png", false)};
+	TextureStochastic m_texture_stochastic{
+		TextureStochastic(DATA_PATH "/sumpf_cobble.png", false)};
 };

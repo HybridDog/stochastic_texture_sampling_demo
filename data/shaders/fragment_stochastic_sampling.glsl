@@ -129,6 +129,8 @@ void main()
 	//~ color.b	= texture(invT, vec2(G.b, LOD)).b;
 
 
+	//~ color.r *= 0.0;
+
 	vec4 col;
 	col.rgb = LinearToSRGB(color);
 	FragColor = col;

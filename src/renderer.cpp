@@ -77,7 +77,7 @@ void Renderer::render()
 	setRenderRect({0.0f, -1.0f}, {1.0f, 1.0f});
 	glBindVertexArray(m_vao);
 	glActiveTexture(GL_TEXTURE0);
-	m_texture.bind();
+	m_texture_stochastic.bind();
 	m_shader_program_stochastic_sampling.setUniform("myTexture", 0);
 	m_shader_program_stochastic_sampling.setUniform("textureResolution",
 		texture_resolution);

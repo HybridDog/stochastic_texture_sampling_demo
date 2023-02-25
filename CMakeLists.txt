@@ -20,6 +20,7 @@ add_executable(Prog
 	src/camera.cpp
 	src/shader_program.cpp
 	src/texture.cpp
+	src/texture_stochastic.cpp
 )
 target_include_directories(Prog PUBLIC src)
 
