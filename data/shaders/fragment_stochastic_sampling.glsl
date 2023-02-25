@@ -113,9 +113,9 @@ void main()
 
 	// Variance-preserving blending
 	vec3 G = w1*G1 + w2*G2 + w3*G3;
-	G = G - vec3(0.5);
-	G = G * inversesqrt(w1*w1 + w2*w2 + w3*w3);
-	G = G + vec3(0.5);
+	//~ G = G - vec3(0.5);
+	//~ G = G * inversesqrt(w1*w1 + w2*w2 + w3*w3);
+	//~ G = G + vec3(0.5);
 
 	// Compute LOD level to fetch the prefiltered look-up table invT
 	//~ float LOD = textureQueryLod(Tinput, uv).y / float(textureSize(invT, 0).y);

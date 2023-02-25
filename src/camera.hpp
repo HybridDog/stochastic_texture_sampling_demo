@@ -10,6 +10,7 @@ public:
 
 private:
 	std::array<float, 3> m_vel{0, 0, 0};
-	std::array<float, 3> m_pos{0, 0, 1};
+	//~ std::array<float, 3> m_pos{0, 0, 1};
+	std::array<float, 3> m_pos{0, 0, 0.1};
 };
 

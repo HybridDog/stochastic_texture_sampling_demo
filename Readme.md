@@ -1,7 +1,5 @@
 # TODO
 
-* Stochastic texture sampling, at first without histogram transformation for
-  simplicity
 * Implement the histogram transformation (see the existing demo for reference)
 * Enable drag-and-drop of image files in the browser to load and showcase
   them with and without stochastic texture sampling
