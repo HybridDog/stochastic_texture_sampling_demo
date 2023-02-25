@@ -36,5 +36,5 @@ private:
 	ShaderProgram m_shader_program_stochastic_sampling{
 		DATA_PATH "/shaders/vertex.glsl",
 		DATA_PATH "/shaders/fragment_stochastic_sampling.glsl"};
-	Texture m_texture{Texture(DATA_PATH "/moontest_stone.png")};
+	Texture m_texture{Texture(DATA_PATH "/moontest_stone.png", false)};
 };
