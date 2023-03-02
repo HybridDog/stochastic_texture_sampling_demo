@@ -90,7 +90,8 @@ float srgb_to_linear(float v)
 		return powf((v + 0.055f) / (1.055f), 2.4f);
 }
 
-float3x3 get_decorrelation_matrix(const std::vector<float4> &values)
+// Calculate a rotation matrix to decorrelate the colour channels
+float3x3 get_correlation_matrix(const std::vector<float4> &values)
 {
 	// Calculate the covariance matrix
 	float3 rgb_mean{0, 0, 0};
@@ -103,7 +104,6 @@ float3x3 get_decorrelation_matrix(const std::vector<float4> &values)
 		float3 rg_rb_gb{rgb[0] * rgb[1], rgb[0] * rgb[2], rgb[1] * rgb[2]};
 		rg_rb_gb_mean += rg_rb_gb;
 	}
-	// TODO: 1/(values.size()-1) statt 1/values.size() bei Varianz
 	rgb_mean *= 1.0f / values.size();
 	rr_gg_bb_mean *= 1.0f / values.size();
 	rg_rb_gb_mean *= 1.0f / values.size();
@@ -128,7 +128,6 @@ float3x3 get_decorrelation_matrix(const std::vector<float4> &values)
 	double eigenvecs_tmp[3][3];
 	double eigenvals_tmp[3];
 	ComputeEigenValuesAndVectors(cov_tmp, eigenvecs_tmp, eigenvals_tmp);
-	// TODO: do I need to transpose this or not? :(
 	double3x3 m{
 		{eigenvecs_tmp[0][0],
 			eigenvecs_tmp[0][1],
@@ -146,7 +145,7 @@ float3x3 get_decorrelation_matrix(const std::vector<float4> &values)
 void decorrelate_colours(std::vector<float4> &values,
 	std::array<float, 9> &inv_transform)
 {
-	float3x3 evs{get_decorrelation_matrix(values)};
+	float3x3 evs{get_correlation_matrix(values)};
 	for (auto &v : values) {
 		const float3 &rgb{reinterpret_cast<const float3 &>(v)};
 		float3 rotated{mul(evs, rgb)};
@@ -154,7 +153,6 @@ void decorrelate_colours(std::vector<float4> &values,
 		v[1] = rotated[1];
 		v[2] = rotated[2];
 	}
-	// TODO: do I need to transpose this or not? Matrix inversion is missing
 	inv_transform = {evs[0][0], evs[1][0], evs[2][0],
 		evs[0][1], evs[1][1], evs[2][1],
 		evs[0][2], evs[1][2], evs[2][2]};
@@ -171,16 +169,16 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 	for (size_t i{0}; i < num_pixels; ++i) {
 		perm.push_back(i);
 	}
-	for (int i = 0; i < 4; ++i) {
-		// Sort perm such that values[perm[n]][i] < values[perm[n+1]][i]
+	for (int c = 0; c < 4; ++c) {
+		// Sort perm such that values[perm[n]][c] < values[perm[n+1]][c]
 		// for all n, 0 <= n < values.size()
-		std::sort(perm.begin(), perm.end(), [&values, &i](int a, int b) {
-			return values[a][i] < values[b][i]; });
+		std::sort(perm.begin(), perm.end(), [&values, &c](int a, int b) {
+			return values[a][c] < values[b][c]; });
 
 		// Create the LUT for the inverse histogram transformation
 		for (int k{0}; k < LUT_WIDTH; ++k) {
 			float U{CDF((k + 0.5f) / LUT_WIDTH, GAUSSIAN_AVERAGE, GAUSSIAN_STD)};
-			lut[k][i] = values[perm[static_cast<int>(floor(U * num_pixels))]][i];
+			lut[k][c] = values[perm[static_cast<int>(floor(U * num_pixels))]][c];
 			//~ lut[k][i] = U;
 			//~ lut[k][i] = (float)k/LUT_WIDTH;
 		}
@@ -188,7 +186,7 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 		// Do the histogram transformation
 		for (size_t k{0}; k < num_pixels; ++k) {
 			float U = (k + 0.5f) / num_pixels;
-			//~ values[perm[k]][i] = invCDF(U, GAUSSIAN_AVERAGE, GAUSSIAN_STD);
+			values[perm[k]][c] = invCDF(U, GAUSSIAN_AVERAGE, GAUSSIAN_STD);
 		}
 
 	}
@@ -234,7 +232,7 @@ TextureStochastic::TextureStochastic(const std::string &path,
 	// Copy the LUT to GPU and configure it
 	glGenTextures(1, &m_lut_id);
 	bind_lut();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_width, m_height, 0,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, LUT_WIDTH, 1, 0,
 		GL_RGBA, GL_FLOAT, lut.data());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

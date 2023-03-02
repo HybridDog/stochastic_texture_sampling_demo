@@ -7,7 +7,6 @@ uniform sampler2D colorLUT;
 uniform vec2 textureResolution;
 uniform vec2 pos0;
 uniform float scale;
-// TODO: the official demo has an additional offset vector; do we need this?
 uniform mat3 inverseDecorrelation;
 
 
@@ -110,15 +109,13 @@ void main()
 	vec2 duvdy = dFdy(uv);
 
 	// Fetch Gaussian input
-	// TODO: myTexture is not gaussianized
 	vec3 G1 = textureGrad(myTexture, uv1, duvdx, duvdy).rgb;
 	vec3 G2 = textureGrad(myTexture, uv2, duvdx, duvdy).rgb;
 	vec3 G3 = textureGrad(myTexture, uv3, duvdx, duvdy).rgb;
 
 	// Variance-preserving blending
 	vec3 G = w1*G1 + w2*G2 + w3*G3;
-	//~ if (colour_transformation) {
-	if (colour_transformation && false) {
+	if (colour_transformation) {
 		G = G - vec3(0.5);
 		G = G * inversesqrt(w1*w1 + w2*w2 + w3*w3);
 		G = G + vec3(0.5);
@@ -127,11 +124,8 @@ void main()
 	// Compute LOD level to fetch the prefiltered look-up table invT
 	//~ float LOD = textureQueryLod(Tinput, uv).y / float(textureSize(invT, 0).y);
 
-	// Fetch prefiltered LUT (T^{-1})
-	// TODO
 	vec3 color;
-	//~ if (colour_transformation) {
-	if (colour_transformation && false) {
+	if (colour_transformation) {
 		color.r	= texture(colorLUT, vec2(G.r, 0.0)).r;
 		color.g	= texture(colorLUT, vec2(G.g, 0.0)).g;
 		color.b	= texture(colorLUT, vec2(G.b, 0.0)).b;
@@ -139,7 +133,7 @@ void main()
 		color = G;
 	}
 
-	// debugging code
+	/*// debugging code
 	if (gl_FragCoord.y > 400.0) {
 		if (mod(gl_FragCoord.x, 400.0) < 100.0) {
 			color.gb *= 0.0;
@@ -148,7 +142,7 @@ void main()
 		} else if (mod(gl_FragCoord.x, 400.0) < 300.0) {
 			color.rb *= 0.0;
 		}
-	}
+	} //*/
 
 	color = inverseDecorrelation * color;
 

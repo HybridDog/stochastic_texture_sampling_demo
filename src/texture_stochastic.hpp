@@ -11,7 +11,11 @@ class TextureStochastic {
 public:
 	TextureStochastic();
 	TextureStochastic(const std::string &path, bool enable_interpolation);
-	// TODO: destructor, copy constructor, copy assignment constructor
+	~TextureStochastic() { glDeleteTextures(1, &m_id);
+		glDeleteTextures(1, &m_lut_id); }
+	TextureStochastic(const TextureStochastic&) = delete;
+	TextureStochastic &operator=(const TextureStochastic&) = delete;
+
 	GLuint getId() const { return m_id; }
 	GLuint getLUTId() const { return m_lut_id; }
 	int getWidth() const { return m_width; }

@@ -7,7 +7,10 @@ class Texture {
 public:
 	Texture();
 	Texture(const std::string &path, bool enable_interpolation);
-	// TODO: destructor, copy constructor, copy assignment constructor
+	~Texture() { glDeleteTextures(1, &m_id); }
+	Texture(const Texture&) = delete;
+	Texture &operator=(const Texture&) = delete;
+
 	GLuint getId() const { return m_id; }
 	int getWidth() const { return m_width; }
 	int getHeight() const { return m_height; }
