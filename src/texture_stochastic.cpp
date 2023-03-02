@@ -1,6 +1,7 @@
 #include <string>
 #include <stdexcept>
 #include <iostream>
+#include <cmath>
 
 #include "texture_stochastic.hpp"
 #include "image_file.hpp"
@@ -9,8 +10,77 @@
 #include "linalg.h"
 using namespace linalg::aliases;
 
+// copy-pasted from the original demo
+#define GAUSSIAN_AVERAGE 0.5f // Expectation of the Gaussian distribution
+#define GAUSSIAN_STD 0.16666f // Std of the Gaussian distribution
+#define LUT_WIDTH 128 // Size of the look-up table
+
 
 namespace {
+
+// math functions copy-pasted from the official demo
+
+float Erf(float x)
+{
+	// Save the sign of x
+	int sign = 1;
+	if (x < 0)
+		sign = -1;
+	x = abs(x);
+
+	// A&S formula 7.1.26
+	float t = 1.0f / (1.0f + 0.3275911f * x);
+	float y = 1.0f - (((((1.061405429f * t + -1.453152027f) * t) + 1.421413741f)
+		* t + -0.284496736f) * t + 0.254829592f) * t * exp(-x * x);
+
+	return sign * y;
+}
+
+float ErfInv(float x)
+{
+	float w, p;
+	w = -log((1.0f - x) * (1.0f + x));
+	if (w < 5.000000f)
+	{
+		w = w - 2.500000f;
+		p = 2.81022636e-08f;
+		p = 3.43273939e-07f + p * w;
+		p = -3.5233877e-06f + p * w;
+		p = -4.39150654e-06f + p * w;
+		p = 0.00021858087f + p * w;
+		p = -0.00125372503f + p * w;
+		p = -0.00417768164f + p * w;
+		p = 0.246640727f + p * w;
+		p = 1.50140941f + p * w;
+	}
+	else
+	{
+		w = sqrt(w) - 3.000000f;
+		p = -0.000200214257f;
+		p = 0.000100950558f + p * w;
+		p = 0.00134934322f + p * w;
+		p = -0.00367342844f + p * w;
+		p = 0.00573950773f + p * w;
+		p = -0.0076224613f + p * w;
+		p = 0.00943887047f + p * w;
+		p = 1.00167406f + p * w;
+		p = 2.83297682f + p * w;
+	}
+	return p * x;
+}
+
+float CDF(float x, float mu, float sigma)
+{
+	float U = 0.5f * (1 + Erf((x-mu)/(sigma*sqrtf(2.0f))));
+	return U;
+}
+
+float invCDF(float U, float mu, float sigma)
+{
+	float x = sigma*sqrtf(2.0f) * ErfInv(2.0f*U-1.0f) + mu;
+	return x;
+}
+
 
 float srgb_to_linear(float v)
 {
@@ -33,6 +103,7 @@ float3x3 get_decorrelation_matrix(const std::vector<float4> &values)
 		float3 rg_rb_gb{rgb[0] * rgb[1], rgb[0] * rgb[2], rgb[1] * rgb[2]};
 		rg_rb_gb_mean += rg_rb_gb;
 	}
+	// TODO: 1/(values.size()-1) statt 1/values.size() bei Varianz
 	rgb_mean *= 1.0f / values.size();
 	rr_gg_bb_mean *= 1.0f / values.size();
 	rg_rb_gb_mean *= 1.0f / values.size();
@@ -89,15 +160,39 @@ void decorrelate_colours(std::vector<float4> &values,
 		evs[0][2], evs[1][2], evs[2][2]};
 }
 
-void histogram_transformation(std::vector<float4> &values)
+std::vector<float4> histogram_transformation(std::vector<float4> &values)
 {
-	// TODO:
-	// * transpose values into 4 float std::vectors
-	// * For each of them:
-	//   * sort it
-	//   * apply forward LUT and calculate backward LUT
-	// * transpose the 4 float vectors back into values (overriding values)
-	// * return the backward LUTs
+	std::vector<float4> lut;
+	lut.resize(LUT_WIDTH);
+	const size_t num_pixels{values.size()};
+	// Determine a permutation for sorting
+	std::vector<int> perm;
+	perm.reserve(num_pixels);
+	for (size_t i{0}; i < num_pixels; ++i) {
+		perm.push_back(i);
+	}
+	for (int i = 0; i < 4; ++i) {
+		// Sort perm such that values[perm[n]][i] < values[perm[n+1]][i]
+		// for all n, 0 <= n < values.size()
+		std::sort(perm.begin(), perm.end(), [&values, &i](int a, int b) {
+			return values[a][i] < values[b][i]; });
+
+		// Create the LUT for the inverse histogram transformation
+		for (int k{0}; k < LUT_WIDTH; ++k) {
+			float U{CDF((k + 0.5f) / LUT_WIDTH, GAUSSIAN_AVERAGE, GAUSSIAN_STD)};
+			lut[k][i] = values[perm[static_cast<int>(floor(U * num_pixels))]][i];
+			//~ lut[k][i] = U;
+			//~ lut[k][i] = (float)k/LUT_WIDTH;
+		}
+
+		// Do the histogram transformation
+		for (size_t k{0}; k < num_pixels; ++k) {
+			float U = (k + 0.5f) / num_pixels;
+			//~ values[perm[k]][i] = invCDF(U, GAUSSIAN_AVERAGE, GAUSSIAN_STD);
+		}
+
+	}
+	return lut;
 }
 
 } // namespace
@@ -124,9 +219,9 @@ TextureStochastic::TextureStochastic(const std::string &path,
 		pixels.emplace_back(rgba);
 	}
 
-	// Decorrelate the colours
-	std::array<float, 9> inv_transform;
-	decorrelate_colours(pixels, inv_transform);
+	// Decorrelate the colours and perform the histogram transformations
+	decorrelate_colours(pixels, m_inverse_decorrelation);
+	std::vector<float4> lut{histogram_transformation(pixels)};
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_width, m_height, 0,
 		GL_RGBA, GL_FLOAT, pixels.data());
@@ -136,7 +231,15 @@ TextureStochastic::TextureStochastic(const std::string &path,
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	setInterpolation(enable_interpolation);
 
-	//~ glGenerateMipmap(GL_TEXTURE_2D);
+	// Copy the LUT to GPU and configure it
+	glGenTextures(1, &m_lut_id);
+	bind_lut();
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_width, m_height, 0,
+		GL_RGBA, GL_FLOAT, lut.data());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 
