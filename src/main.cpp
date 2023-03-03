@@ -2,8 +2,7 @@
 #include <assert.h>
 #include <iostream>
 #include <set>
-#include <memory>
-
+#include <chrono>
 
 #include <SDL2/SDL.h>
 #include <common.hpp>
@@ -12,13 +11,25 @@
 #endif
 
 #include "renderer.hpp"
-#include "dtime_calculator.hpp"
+#include "emscripten-browser-file/emscripten_browser_file.h"
+
 
 struct Context {
 	SDL_Window *window;
 	Renderer renderer{1500, 800};
 	std::set<int> held_keys{};
+	std::chrono::time_point<std::chrono::steady_clock> m_time{
+		std::chrono::steady_clock::now()};
+	float updateTime();
 };
+
+float Context::updateTime()
+{
+	auto time_now{std::chrono::steady_clock::now()};
+	float dtime{std::chrono::duration<float>(time_now - m_time).count()};
+	m_time = time_now;
+	return dtime;
+}
 
 bool loop(Context &c)
 {
@@ -65,9 +76,7 @@ bool loop(Context &c)
 			return false;
 		}
 	}
-	//~ float dtime{timer.calculateDtime(SDL_GetTicks64() * 0.001)};
-	//~ renderer.getCamera().update(acc_dir, dtime);
-	c.renderer.getCamera().update(acc_dir, 0.017);
+	c.renderer.getCamera().update(acc_dir, c.updateTime());
 	c.renderer.render();
 	SDL_GL_SwapWindow(c.window);
 	return true;
@@ -79,19 +88,26 @@ void emscripten_loop(void *arg)
 	loop(*c);
 }
 
+void emscripten_on_file_upload(std::string const &filename,
+	std::string const &mime_type, std::string_view buffer, void *arg)
+{
+	Context *c{static_cast<Context *>(arg)};
+	//~ c->renderer.setTexture(buffer);
+}
+
 int main()
 {
 	SDL_Window *window{SDL_CreateWindow("mein prog", 0, 0, 1500, 800,
 		SDL_WINDOW_OPENGL)};
 	assert(window);
-	//~ SDL_GLContext context{SDL_GL_CreateContext(window)};
 	SDL_GL_CreateContext(window);
 	GLenum err = glewInit();
 	if (err != GLEW_OK)
 		return 1;
-	// DtimeCalculator timer{SDL_GetTicks64() * 0.001};
 #ifdef __EMSCRIPTEN__
 	Context *c_ptr{new Context{window}};
+	emscripten_browser_file::upload(".png,.jpg,.jpeg",
+		emscripten_on_file_upload, c_ptr);
 	emscripten_set_main_loop_arg(emscripten_loop, c_ptr, -1, 1);
 	delete c_ptr;
 #else
