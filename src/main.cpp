@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <iostream>
 #include <set>
+#include <memory>
+
 
 #include <SDL2/SDL.h>
 #include <common.hpp>
@@ -87,11 +89,13 @@ int main()
 	GLenum err = glewInit();
 	if (err != GLEW_OK)
 		return 1;
-	Context c{window};
 	// DtimeCalculator timer{SDL_GetTicks64() * 0.001};
 #ifdef __EMSCRIPTEN__
-	emscripten_set_main_loop_arg(emscripten_loop, &c, -1, 1);
+	Context *c_ptr{new Context{window}};
+	emscripten_set_main_loop_arg(emscripten_loop, c_ptr, -1, 1);
+	delete c_ptr;
 #else
+	Context c{window};
 	for(;;) {
 		if (!loop(c))
 			break;
