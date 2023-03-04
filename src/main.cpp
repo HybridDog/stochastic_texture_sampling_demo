@@ -11,6 +11,7 @@
 #endif
 
 #include "renderer.hpp"
+#include "image_file.hpp"
 #include "emscripten-browser-file/emscripten_browser_file.h"
 
 
@@ -91,8 +92,13 @@ void emscripten_loop(void *arg)
 void emscripten_on_file_upload(std::string const &filename,
 	std::string const &mime_type, std::string_view buffer, void *arg)
 {
+	if (buffer.size() == 0) {
+		std::cerr << "Empty file was uploaded" << std::endl;
+		return;
+	}
 	Context *c{static_cast<Context *>(arg)};
-	//~ c->renderer.setTexture(buffer);
+	std::vector<u8> buffer_v(buffer.begin(), buffer.end());
+	c->renderer.setImage(ImageFile{buffer_v});
 }
 
 int main()

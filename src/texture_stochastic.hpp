@@ -4,13 +4,15 @@
 
 #include <GL/glew.h>
 
+#include "image_file.hpp"
+
 
 // A histogram-transformed texture with LUT and a matrix for the inverse
 // transformation
 class TextureStochastic {
 public:
 	TextureStochastic();
-	TextureStochastic(const std::string &path, bool enable_interpolation);
+	TextureStochastic(const ImageFile &img, bool enable_interpolation);
 	~TextureStochastic() { glDeleteTextures(1, &m_id);
 		glDeleteTextures(1, &m_lut_id); }
 	TextureStochastic(const TextureStochastic&) = delete;
@@ -24,6 +26,7 @@ public:
 	void bind_lut() const { glBindTexture(GL_TEXTURE_2D, m_lut_id); }
 	std::array<float, 9> &getInverseDecorrelation() { return m_inverse_decorrelation; }
 	void setInterpolation(bool enable_interpolation) const;
+	void loadImage(const ImageFile &img);
 
 private:
 	GLuint m_id{0};

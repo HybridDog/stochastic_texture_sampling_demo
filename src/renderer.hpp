@@ -6,6 +6,7 @@
 #include "texture.hpp"
 #include "texture_stochastic.hpp"
 #include "camera.hpp"
+#include "image_file.hpp"
 
 #ifdef __EMSCRIPTEN__
 #define DATA_PATH "/data"
@@ -20,6 +21,8 @@ public:
 	void render();
 	void setSize(int width, int height);
 	Camera &getCamera() { return m_camera; }
+	void setImage(const ImageFile &img) { m_texture.loadImage(img);
+		m_texture_stochastic.loadImage(img); }
 
 private:
 	// Set the portion of the frame which is rendered to.
@@ -37,7 +40,7 @@ private:
 	ShaderProgram m_shader_program_stochastic_sampling{
 		DATA_PATH "/shaders/vertex.glsl",
 		DATA_PATH "/shaders/fragment_stochastic_sampling.glsl"};
-	Texture m_texture{Texture(DATA_PATH "/sumpf_cobble.png", false)};
+	Texture m_texture{Texture{ImageFile{DATA_PATH "/sumpf_cobble.png"}, false}};
 	TextureStochastic m_texture_stochastic{
-		TextureStochastic(DATA_PATH "/sumpf_cobble.png", false)};
+		TextureStochastic{ImageFile{DATA_PATH "/sumpf_cobble.png"}, false}};
 };

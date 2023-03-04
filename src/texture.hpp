@@ -2,11 +2,13 @@
 
 #include <GL/glew.h>
 
+#include "image_file.hpp"
+
 
 class Texture {
 public:
 	Texture();
-	Texture(const std::string &path, bool enable_interpolation);
+	Texture(const ImageFile &img, bool enable_interpolation);
 	~Texture() { glDeleteTextures(1, &m_id); }
 	Texture(const Texture&) = delete;
 	Texture &operator=(const Texture&) = delete;
@@ -16,6 +18,7 @@ public:
 	int getHeight() const { return m_height; }
 	void bind() const { glBindTexture(GL_TEXTURE_2D, m_id); }
 	void setInterpolation(bool enable_interpolation) const;
+	void loadImage(const ImageFile &img);
 
 private:
 	GLuint m_id{0};

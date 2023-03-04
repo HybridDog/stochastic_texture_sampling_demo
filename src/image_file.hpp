@@ -1,3 +1,5 @@
+# pragma once
+
 #include <string>
 
 #include <SDL2/SDL_image.h>
@@ -8,6 +10,7 @@
 class ImageFile {
 public:
 	ImageFile(const std::string &path);
+	ImageFile(const std::vector<u8> &data);
 	ImageFile(const ImageFile&) = delete;
 	ImageFile &operator=(const ImageFile &o) = delete;
 	~ImageFile() { SDL_FreeSurface(m_surface); }

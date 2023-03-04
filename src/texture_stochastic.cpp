@@ -4,7 +4,6 @@
 #include <cmath>
 
 #include "texture_stochastic.hpp"
-#include "image_file.hpp"
 #include "common.hpp"
 #include "jacobi.h"
 #include "linalg.h"
@@ -196,16 +195,34 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 } // namespace
 
 
-TextureStochastic::TextureStochastic(const std::string &path,
-	bool enable_interpolation)
+TextureStochastic::TextureStochastic(const ImageFile &img,
+		bool enable_interpolation)
 {
+	// Create and configure the image texture
 	glGenTextures(1, &m_id);
 	bind();
+	// Configure boundary behaviour, interpolation and mipmapping
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	setInterpolation(enable_interpolation);
 
-	// Load the image and convert it to floats in linear colourspace
-	ImageFile img{path};
+	// Create and configure the LUT texture
+	glGenTextures(1, &m_lut_id);
+	bind_lut();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	loadImage(img);
+}
+
+void TextureStochastic::loadImage(const ImageFile &img)
+{
 	m_width = img.getWidth();
 	m_height = img.getHeight();
+
+	// Load the image and convert it to floats in linear colourspace
 	std::vector<float4> pixels;
 	pixels.reserve(m_width * m_height);
 	byte4 *pixels_raw{reinterpret_cast<byte4 *>(img.getPixels())};
@@ -221,27 +238,14 @@ TextureStochastic::TextureStochastic(const std::string &path,
 	decorrelate_colours(pixels, m_inverse_decorrelation);
 	std::vector<float4> lut{histogram_transformation(pixels)};
 
+	// Upload to GPU
+	bind();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_width, m_height, 0,
 		GL_RGBA, GL_FLOAT, pixels.data());
-
-	// Configure boundary behaviour, interpolation and mipmapping
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	setInterpolation(enable_interpolation);
-
-	// Copy the LUT to GPU and configure it
-	glGenTextures(1, &m_lut_id);
 	bind_lut();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, LUT_WIDTH, 1, 0,
 		GL_RGBA, GL_FLOAT, lut.data());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
-
-
-
 
 void TextureStochastic::setInterpolation(bool enable_interpolation) const
 {
