@@ -5,7 +5,7 @@
 namespace {
 
 // Process a SDL surface to ensure it is in a RGBA format
-void convert_surface(SDL_Surface *surface)
+SDL_Surface *convert_surface(SDL_Surface *surface)
 {
 	// Convert the image to ensure that it is in RGBA format
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -26,17 +26,18 @@ void convert_surface(SDL_Surface *surface)
 	SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 	SDL_BlitSurface(surface, nullptr, convert, nullptr);
 	SDL_FreeSurface(surface);
-	surface = convert;
+	return convert;
 }
 
 }  // namespace
+
 
 ImageFile::ImageFile(const std::string &path):
 	m_surface{IMG_Load(path.c_str())}
 {
 	if (m_surface == nullptr)
 		throw std::runtime_error("Could not load image " + path);
-	convert_surface(m_surface);
+	m_surface = convert_surface(m_surface);
 }
 
 ImageFile::ImageFile(const std::vector<u8> &data)
@@ -46,5 +47,5 @@ ImageFile::ImageFile(const std::vector<u8> &data)
 	m_surface = IMG_Load_RW(ops, 1);
 	if (m_surface == nullptr)
 		throw std::runtime_error("Could not load image");
-	convert_surface(m_surface);
+	m_surface = convert_surface(m_surface);
 }
