@@ -15,6 +15,21 @@
         };
     </script>
     <script src="Prog.js"></script>
+    <script type='text/javascript'>
+        // Code for drag and drop onto the canvas.
+        // Both ondrop and ondragover have to be defined;
+        // see https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API#define_a_drop_zone
+        mcan = document.getElementById('canvas');
+        mcan.ondragover = function(ev) {
+            ev.preventDefault();
+            ev.dataTransfer.dropEffect = "copy";
+        }
+        mcan.ondrop = function(ev) {
+            ev.preventDefault();
+            // open_dropped_file is defined in emscripten_browser_file.h
+            open_dropped_file(ev);
+        };
+    </script>
 </center>
 </body>
 
