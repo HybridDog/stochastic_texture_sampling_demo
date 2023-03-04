@@ -40,12 +40,15 @@ ImageFile::ImageFile(const std::string &path):
 	m_surface = convert_surface(m_surface);
 }
 
+/*
+// IMG_Load_RW does not work with emscripten because the browser does the
+// decoding
 ImageFile::ImageFile(const std::vector<u8> &data)
 {
-	std::cout << data.size() << std::endl;
 	SDL_RWops *ops{SDL_RWFromConstMem(data.data(), data.size())};
 	m_surface = IMG_Load_RW(ops, 1);
 	if (m_surface == nullptr)
 		throw std::runtime_error("Could not load image");
 	m_surface = convert_surface(m_surface);
 }
+*/

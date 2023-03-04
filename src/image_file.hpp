@@ -11,7 +11,7 @@
 class ImageFile {
 public:
 	ImageFile(const std::string &path);
-	ImageFile(const std::vector<u8> &data);
+	//~ ImageFile(const std::vector<u8> &data);
 	ImageFile(const ImageFile&) = delete;
 	ImageFile &operator=(const ImageFile &o) = delete;
 	~ImageFile() { if (m_surface) SDL_FreeSurface(m_surface); }

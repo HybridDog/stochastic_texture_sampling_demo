@@ -57,15 +57,21 @@ EM_JS_INLINE(void, upload, (char const *accept_types, upload_handler callback, v
 #else
 EM_JS_INLINE(void, upload, (char const *accept_types, upload_handler callback, void *callback_data = nullptr), {
   // A function which can be used on an ondrop event
-  globalThis.open_dropped_file = function(event) {
-    const uint8Arr = new Uint8Array(event.target.result);
-    const num_bytes = uint8Arr.length * uint8Arr.BYTES_PER_ELEMENT;
-    const data_ptr = Module._malloc(num_bytes);
-    const data_on_heap = new Uint8Array(Module.HEAPU8.buffer, data_ptr, num_bytes);
-    data_on_heap.set(uint8Arr);
-    var callback_data = callback_data || 0;
-    const res = Module.ccall('load_file_return', 'number', ['string', 'string', 'number', 'number', 'number', 'number'], [event.target.filename, event.target.mime_type, data_on_heap.byteOffset, uint8Arr.length, callback, callback_data]);
-    Module._free(data_ptr);
+  globalThis.open_dropped_file = function(ev) {
+    const file_reader = new FileReader();
+    file_reader.onload = (event) => {
+      const uint8Arr = new Uint8Array(event.target.result);
+      const num_bytes = uint8Arr.length * uint8Arr.BYTES_PER_ELEMENT;
+      const data_ptr = Module._malloc(num_bytes);
+      const data_on_heap = new Uint8Array(Module.HEAPU8.buffer, data_ptr, num_bytes);
+      data_on_heap.set(uint8Arr);
+      var callback_data = callback_data || 0;
+      const res = Module.ccall('load_file_return', 'number', ['string', 'string', 'number', 'number', 'number', 'number'], [event.target.filename, event.target.mime_type, data_on_heap.byteOffset, uint8Arr.length, callback, callback_data]);
+      Module._free(data_ptr);
+    };
+    file_reader.filename = ev.dataTransfer.files[0].name;
+    file_reader.mime_type = ev.dataTransfer.files[0].type;
+    file_reader.readAsArrayBuffer(ev.dataTransfer.files[0]);
   };
 });
 #endif

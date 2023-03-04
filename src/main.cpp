@@ -7,6 +7,7 @@
 #include <SDL2/SDL.h>
 #include <common.hpp>
 #ifdef __EMSCRIPTEN__
+#include <fstream>
 #include <emscripten.h>
 #endif
 
@@ -21,6 +22,7 @@ struct Context {
 	SDL_Window *window;
 	Renderer renderer{1500, 800};
 	std::set<int> held_keys{};
+	const char *image_file_to_load{nullptr};
 	std::chrono::time_point<std::chrono::steady_clock> m_time{
 		std::chrono::steady_clock::now()};
 	float updateTime();
@@ -36,6 +38,12 @@ float Context::updateTime()
 
 bool loop(Context &c)
 {
+	if (c.image_file_to_load) {
+		// TODO: why is this not reached altough on_file_decoded is called?
+		std::cerr << "loading imgage\n";
+		c.renderer.setImage(ImageFile{c.image_file_to_load});
+		c.image_file_to_load = nullptr;
+	}
 	std::array acc_dir{0.0f, 0.0f, 0.0f};
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -92,16 +100,30 @@ void emscripten_loop(void *arg)
 	loop(*c);
 }
 
+Context *ptr_context;
+void on_file_decoded(const char *filename)
+{
+	std::cerr << "Image decoded!\n";
+	ptr_context->image_file_to_load = filename;
+}
+
 void emscripten_on_file_upload(std::string const &filename,
 	std::string const &mime_type, std::string_view buffer, void *arg)
 {
+	ptr_context = static_cast<Context *>(arg);
 	if (buffer.size() == 0) {
-		std::cerr << "Empty file was uploaded" << std::endl;
+		std::cerr << "Empty file was uploaded; filename: " << filename <<
+			", mime_type: " << mime_type << std::endl;
 		return;
 	}
-	Context *c{static_cast<Context *>(arg)};
-	std::vector<u8> buffer_v(buffer.begin(), buffer.end());
-	c->renderer.setImage(ImageFile{buffer_v});
+	// Save the image file and let the browser decode it
+	// TODO: remove the .png file extension if it works
+	std::ofstream outfile("/tmp_image.png", std::ios::binary);
+	if (!outfile.is_open())
+		throw std::runtime_error("Could not open /tmp_image.png for writing");
+	outfile.write(buffer.data(), buffer.size());
+	outfile.flush();
+	emscripten_run_preload_plugins("/tmp_image.png", on_file_decoded, nullptr);
 }
 #endif
 
