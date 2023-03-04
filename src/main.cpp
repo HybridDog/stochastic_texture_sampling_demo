@@ -12,7 +12,9 @@
 
 #include "renderer.hpp"
 #include "image_file.hpp"
+#ifdef __EMSCRIPTEN__
 #include "emscripten-browser-file/emscripten_browser_file.h"
+#endif
 
 
 struct Context {
@@ -83,6 +85,7 @@ bool loop(Context &c)
 	return true;
 }
 
+#ifdef __EMSCRIPTEN__
 void emscripten_loop(void *arg)
 {
 	Context *c{static_cast<Context *>(arg)};
@@ -100,6 +103,7 @@ void emscripten_on_file_upload(std::string const &filename,
 	std::vector<u8> buffer_v(buffer.begin(), buffer.end());
 	c->renderer.setImage(ImageFile{buffer_v});
 }
+#endif
 
 int main()
 {

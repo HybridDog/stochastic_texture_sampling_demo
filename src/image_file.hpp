@@ -1,6 +1,7 @@
 # pragma once
 
 #include <string>
+#include <vector>
 
 #include <SDL2/SDL_image.h>
 
@@ -13,7 +14,7 @@ public:
 	ImageFile(const std::vector<u8> &data);
 	ImageFile(const ImageFile&) = delete;
 	ImageFile &operator=(const ImageFile &o) = delete;
-	~ImageFile() { SDL_FreeSurface(m_surface); }
+	~ImageFile() { if (m_surface) SDL_FreeSurface(m_surface); }
 
 	auto getWidth() const { return m_surface->w; }
 	auto getHeight() const { return m_surface->h; }
