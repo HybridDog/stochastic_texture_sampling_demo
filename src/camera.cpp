@@ -10,11 +10,11 @@ void Camera::update(std::array<float, 3> &acc_dir, float dtime)
 	std::array<float, 3> acc{0, 0, 0};
 	if (acc_len > 0) {
 		for (int i = 0; i < 3; ++i) {
-			acc[i] = acc_dir[i] * 5.0f / acc_len;
+			acc[i] = acc_dir[i] / acc_len;
 		}
 		// Accelerate faster if we are further away, slower in z direction
-		acc[0] *= 200.0f * m_pos[2];
-		acc[1] *= 200.0f * m_pos[2];
+		acc[0] *= 20000.0f * m_pos[2];
+		acc[1] *= 20000.0f * m_pos[2];
 	}
 	// Formally incorrect; move the camera
 	for (int i = 0; i < 3; ++i) {

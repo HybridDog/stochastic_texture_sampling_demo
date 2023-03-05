@@ -87,15 +87,15 @@ vec2 hash(ivec2 p_i)
 void main()
 {
 	bool colour_transformation = true;
-	vec2 uv = pos0 + gl_FragCoord.xy / (textureResolution * scale);
+	vec2 uv = pos0 + gl_FragCoord.xy / scale;
+	uv.y = -uv.y * textureResolution.x / textureResolution.y;
 
 	// Get triangle info
 	float w1, w2, w3;
 	ivec2 vertex1, vertex2, vertex3;
 	// meins, nearest 16x16
 	if (true) {
-		float res = 16.0;
-		uv = 1.0/res * floor(uv * res);
+		uv = 1.0 / textureResolution * floor(uv * textureResolution);
 	}
 	TriangleGrid(uv, w1, w2, w3, vertex1, vertex2, vertex3);
 

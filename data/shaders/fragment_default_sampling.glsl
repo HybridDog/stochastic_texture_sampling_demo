@@ -22,7 +22,8 @@ vec3 LinearToSRGB(vec3 rgb)
 
 void main()
 {
-	vec2 uv = pos0 + gl_FragCoord.xy / (textureResolution * scale);
+	vec2 uv = pos0 + gl_FragCoord.xy / scale;
+	uv.y = -uv.y * textureResolution.x / textureResolution.y;
 	vec4 col = texture(myTexture, uv);
 	col.rgb = LinearToSRGB(col.rgb);
 	FragColor = col;
