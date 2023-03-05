@@ -8,6 +8,8 @@ uniform vec2 textureResolution;
 uniform vec2 pos0;
 uniform float scale;
 uniform mat3 inverseDecorrelation;
+uniform bool interpolationEnabled;
+uniform bool colourTransformationEnabled;
 
 
 // from https://www.shadertoy.com/view/ttByDw
@@ -86,15 +88,14 @@ vec2 hash(ivec2 p_i)
 
 void main()
 {
-	bool colour_transformation = true;
 	vec2 uv = pos0 + gl_FragCoord.xy / scale;
 	uv.y = -uv.y * textureResolution.x / textureResolution.y;
 
 	// Get triangle info
 	float w1, w2, w3;
 	ivec2 vertex1, vertex2, vertex3;
-	// meins, nearest 16x16
-	if (true) {
+	if (!interpolationEnabled) {
+		// Round to texels
 		uv = 1.0 / textureResolution * floor(uv * textureResolution);
 	}
 	TriangleGrid(uv, w1, w2, w3, vertex1, vertex2, vertex3);
@@ -115,36 +116,22 @@ void main()
 
 	// Variance-preserving blending
 	vec3 G = w1*G1 + w2*G2 + w3*G3;
-	if (colour_transformation) {
-		G = G - vec3(0.5);
-		G = G * inversesqrt(w1*w1 + w2*w2 + w3*w3);
-		G = G + vec3(0.5);
+	if (colourTransformationEnabled) {
+		G = (G - vec3(0.5)) * inversesqrt(w1*w1 + w2*w2 + w3*w3) + vec3(0.5);
 	}
 
 	// Compute LOD level to fetch the prefiltered look-up table invT
 	//~ float LOD = textureQueryLod(Tinput, uv).y / float(textureSize(invT, 0).y);
 
 	vec3 color;
-	if (colour_transformation) {
+	if (colourTransformationEnabled) {
 		color.r	= texture(colorLUT, vec2(G.r, 0.0)).r;
 		color.g	= texture(colorLUT, vec2(G.g, 0.0)).g;
 		color.b	= texture(colorLUT, vec2(G.b, 0.0)).b;
+		color = inverseDecorrelation * color;
 	} else {
 		color = G;
 	}
-
-	/*// debugging code
-	if (gl_FragCoord.y > 400.0) {
-		if (mod(gl_FragCoord.x, 400.0) < 100.0) {
-			color.gb *= 0.0;
-		} else if (mod(gl_FragCoord.x, 400.0) < 200.0) {
-			color.rg *= 0.0;
-		} else if (mod(gl_FragCoord.x, 400.0) < 300.0) {
-			color.rb *= 0.0;
-		}
-	} //*/
-
-	color = inverseDecorrelation * color;
 
 	vec4 col;
 	col.rgb = LinearToSRGB(color);

@@ -23,6 +23,9 @@ public:
 	Camera &getCamera() { return m_camera; }
 	void setImage(const ImageFile &img) { m_texture.loadImage(img);
 		m_texture_stochastic.loadImage(img); }
+	void toggleInterpolation();
+	void toggleColourTransformation() {
+		m_colour_transformation_enabled = !m_colour_transformation_enabled; };
 
 private:
 	// Set the portion of the frame which is rendered to.
@@ -32,6 +35,8 @@ private:
 
 	int m_width{0};
 	int m_height{0};
+	bool m_interpolation_enabled{false};
+	bool m_colour_transformation_enabled{true};
 	Camera m_camera{Camera()};
 	GLuint m_vao{0};
 	ShaderProgram m_shader_program_default_sampling{

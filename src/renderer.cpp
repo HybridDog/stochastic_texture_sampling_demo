@@ -19,6 +19,13 @@ Renderer::Renderer(int width, int height)
 	glGenVertexArrays(1, &m_vao);
 }
 
+void Renderer::toggleInterpolation()
+{
+	m_interpolation_enabled = !m_interpolation_enabled;
+	m_texture.setInterpolation(m_interpolation_enabled);
+	m_texture_stochastic.setInterpolation(m_interpolation_enabled);
+}
+
 void Renderer::setRenderRect(const std::array<float, 2> &pos1,
 	const std::array<float, 2> &pos2)
 {
@@ -77,7 +84,11 @@ void Renderer::render()
 	setRenderRect({0.0f, -1.0f}, {1.0f, 1.0f});
 	glBindVertexArray(m_vao);
 	glActiveTexture(GL_TEXTURE0);
-	m_texture_stochastic.bind();
+	if (m_colour_transformation_enabled) {
+		m_texture_stochastic.bind();
+	} else {
+		m_texture.bind();
+	}
 	m_shader_program_stochastic_sampling.setUniform("myTexture", 0);
 	glActiveTexture(GL_TEXTURE0 + 1);
 	m_texture_stochastic.bind_lut();
@@ -88,5 +99,9 @@ void Renderer::render()
 	m_shader_program_stochastic_sampling.setUniform("scale", m_camera.getZoom());
 	m_shader_program_stochastic_sampling.setUniform("inverseDecorrelation",
 		m_texture_stochastic.getInverseDecorrelation());
+	m_shader_program_stochastic_sampling.setUniform("interpolationEnabled",
+		m_interpolation_enabled);
+	m_shader_program_stochastic_sampling.setUniform(
+		"colourTransformationEnabled", m_colour_transformation_enabled);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

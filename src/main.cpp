@@ -71,6 +71,12 @@ bool loop(Context &c)
 			case '-':
 				acc_dir[2] += 1.0f;
 				break;
+			case 'i':
+				c.renderer.toggleInterpolation();
+				break;
+			case 'c':
+				c.renderer.toggleColourTransformation();
+				break;
 			default:
 				break;
 			}
