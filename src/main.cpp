@@ -19,15 +19,43 @@
 
 
 struct Context {
-	SDL_Window *window;
-	Renderer renderer{1500, 800};
-	std::set<int> held_keys{};
-	std::string image_file_to_load{""};
-	bool should_load_image_file{false};
+	SDL_Window *m_window;
+	Renderer m_renderer{1500, 800};
+	std::set<int> m_held_keys{};
+	std::string m_image_file_to_load{""};
+	bool m_should_load_image_file{false};
 	std::chrono::time_point<std::chrono::steady_clock> m_time{
 		std::chrono::steady_clock::now()};
 	float updateTime();
+	bool loop();
+	void showHelp() const;
 };
+
+void Context::showHelp() const
+{
+	const std::string helptext{
+		"General:\n"
+		"	h: Show this help\n"
+		"\n"
+		"Image-related:\n"
+		"	Mouse drag and drop: Load an image\n"
+		"	i: Toggle between nearest neighbour and linear interpolation\n"
+		"	c: Toggle histogram colour transformation\n"
+		"\n"
+		"Movement:\n"
+		"	+/-: Zoom in/out. + may not work.\n"
+		"	arrow keys: Move up/down/left/right\n"
+		"	vertical scrolling: Move up/down\n"
+		"	horizontal scrolling: Move right/left\n"
+		"	Shift + vertical scrolling: Zoom in/out\n"
+	};
+	std::cout << helptext;
+#ifdef __EMSCRIPTEN__
+	EM_ASM({
+		alert(UTF8ToString($0));
+	}, helptext.c_str());
+#endif
+}
 
 float Context::updateTime()
 {
@@ -37,13 +65,13 @@ float Context::updateTime()
 	return dtime;
 }
 
-bool loop(Context &c)
+bool Context::loop()
 {
-	if (c.should_load_image_file) {
-		c.renderer.setImage(ImageFile{c.image_file_to_load});
+	if (m_should_load_image_file) {
+		m_renderer.setImage(ImageFile{m_image_file_to_load});
 		// FIXME: delete the file here to free memory
-		c.image_file_to_load = "";
-		c.should_load_image_file = false;
+		m_image_file_to_load = "";
+		m_should_load_image_file = false;
 	}
 	std::array acc_dir{0.0f, 0.0f, 0.0f};
 	SDL_Event event;
@@ -72,19 +100,22 @@ bool loop(Context &c)
 				acc_dir[2] += 1.0f;
 				break;
 			case 'i':
-				c.renderer.toggleInterpolation();
+				m_renderer.toggleInterpolation();
 				break;
 			case 'c':
-				c.renderer.toggleColourTransformation();
+				m_renderer.toggleColourTransformation();
+				break;
+			case 'h':
+				showHelp();
 				break;
 			default:
 				break;
 			}
-			c.held_keys.insert(event.key.keysym.sym);
+			m_held_keys.insert(event.key.keysym.sym);
 		} else if (event.type == SDL_KEYUP) {
-			c.held_keys.erase(event.key.keysym.sym);
+			m_held_keys.erase(event.key.keysym.sym);
 		} else if (event.type == SDL_MOUSEWHEEL) {
-			if (c.held_keys.contains(SDLK_LSHIFT)) {
+			if (m_held_keys.contains(SDLK_LSHIFT)) {
 				acc_dir[2] += -2.0f * event.wheel.preciseY;
 			} else {
 				acc_dir[0] += event.wheel.preciseX;
@@ -94,28 +125,31 @@ bool loop(Context &c)
 			return false;
 		}
 	}
-	c.renderer.getCamera().update(acc_dir, c.updateTime());
-	c.renderer.render();
-	SDL_GL_SwapWindow(c.window);
+	m_renderer.getCamera().update(acc_dir, updateTime());
+	m_renderer.render();
+	SDL_GL_SwapWindow(m_window);
 	return true;
 }
+
+
+namespace {
 
 #ifdef __EMSCRIPTEN__
 void emscripten_loop(void *arg)
 {
 	Context *c{static_cast<Context *>(arg)};
-	loop(*c);
+	c->loop();
 }
 
 Context *ptr_context;
 void on_file_decoded(const char *)
 {
-	ptr_context->should_load_image_file = true;
+	ptr_context->m_should_load_image_file = true;
 }
 void on_file_decoded_error(const char *)
 {
 	std::cerr << "Could not decode image " <<
-		ptr_context->image_file_to_load << "\n";
+		ptr_context->m_image_file_to_load << "\n";
 	// FIXME: delete the file here to free memory
 }
 
@@ -135,11 +169,14 @@ void emscripten_on_file_upload(std::string const &filename,
 		throw std::runtime_error("Could not open " + filename + " for writing");
 	outfile.write(buffer.data(), buffer.size());
 	outfile.flush();
-	ptr_context->image_file_to_load = filename;
+	ptr_context->m_image_file_to_load = filename;
 	emscripten_run_preload_plugins(filename.c_str(), on_file_decoded,
 		on_file_decoded_error);
 }
 #endif
+
+}  // namespace
+
 
 int main()
 {
@@ -162,7 +199,7 @@ int main()
 #else
 	Context c{window};
 	for(;;) {
-		if (!loop(c))
+		if (!c.loop())
 			break;
 	}
 #endif

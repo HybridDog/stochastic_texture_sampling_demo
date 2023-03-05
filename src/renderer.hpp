@@ -45,7 +45,7 @@ private:
 	ShaderProgram m_shader_program_stochastic_sampling{
 		DATA_PATH "/shaders/vertex.glsl",
 		DATA_PATH "/shaders/fragment_stochastic_sampling.glsl"};
-	Texture m_texture{Texture{ImageFile{DATA_PATH "/sumpf_cobble.png"}, false}};
+	Texture m_texture{Texture{ImageFile{DATA_PATH "/help_image.png"}, false}};
 	TextureStochastic m_texture_stochastic{
-		TextureStochastic{ImageFile{DATA_PATH "/sumpf_cobble.png"}, false}};
+		TextureStochastic{ImageFile{DATA_PATH "/help_image.png"}, false}};
 };

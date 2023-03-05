@@ -1,7 +1,5 @@
 # TODO
 
-* Add an image which shows "press h" and show help text when pressing h, which
-  shows info about all key combinations, mouse, drag and drop, etc.
 * Fill the whole window instead of using a fixed resolution
 * Improve the user interaction (key combinations, etc.)
 * Bundle everything into a single html file
