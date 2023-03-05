@@ -22,7 +22,8 @@ struct Context {
 	SDL_Window *window;
 	Renderer renderer{1500, 800};
 	std::set<int> held_keys{};
-	const char *image_file_to_load{nullptr};
+	std::string image_file_to_load{""};
+	bool should_load_image_file{false};
 	std::chrono::time_point<std::chrono::steady_clock> m_time{
 		std::chrono::steady_clock::now()};
 	float updateTime();
@@ -38,11 +39,11 @@ float Context::updateTime()
 
 bool loop(Context &c)
 {
-	if (c.image_file_to_load) {
-		// TODO: why is this not reached altough on_file_decoded is called?
-		std::cerr << "loading imgage\n";
+	if (c.should_load_image_file) {
 		c.renderer.setImage(ImageFile{c.image_file_to_load});
-		c.image_file_to_load = nullptr;
+		// FIXME: delete the file here to free memory
+		c.image_file_to_load = "";
+		c.should_load_image_file = false;
 	}
 	std::array acc_dir{0.0f, 0.0f, 0.0f};
 	SDL_Event event;
@@ -101,29 +102,36 @@ void emscripten_loop(void *arg)
 }
 
 Context *ptr_context;
-void on_file_decoded(const char *filename)
+void on_file_decoded(const char *)
 {
-	std::cerr << "Image decoded!\n";
-	ptr_context->image_file_to_load = filename;
+	ptr_context->should_load_image_file = true;
+}
+void on_file_decoded_error(const char *)
+{
+	std::cerr << "Could not decode image " <<
+		ptr_context->image_file_to_load << "\n";
+	// FIXME: delete the file here to free memory
 }
 
 void emscripten_on_file_upload(std::string const &filename,
 	std::string const &mime_type, std::string_view buffer, void *arg)
 {
-	ptr_context = static_cast<Context *>(arg);
+	// FIXME: Passing the context to upload apparently does not work correctly
+	//~ ptr_context = static_cast<Context *>(arg);
 	if (buffer.size() == 0) {
 		std::cerr << "Empty file was uploaded; filename: " << filename <<
 			", mime_type: " << mime_type << std::endl;
 		return;
 	}
 	// Save the image file and let the browser decode it
-	// TODO: remove the .png file extension if it works
-	std::ofstream outfile("/tmp_image.png", std::ios::binary);
+	std::ofstream outfile(filename, std::ios::binary);
 	if (!outfile.is_open())
-		throw std::runtime_error("Could not open /tmp_image.png for writing");
+		throw std::runtime_error("Could not open " + filename + " for writing");
 	outfile.write(buffer.data(), buffer.size());
 	outfile.flush();
-	emscripten_run_preload_plugins("/tmp_image.png", on_file_decoded, nullptr);
+	ptr_context->image_file_to_load = filename;
+	emscripten_run_preload_plugins(filename.c_str(), on_file_decoded,
+		on_file_decoded_error);
 }
 #endif
 
@@ -138,6 +146,9 @@ int main()
 		return 1;
 #ifdef __EMSCRIPTEN__
 	Context *c_ptr{new Context{window}};
+	ptr_context = c_ptr;
+	// The accepted files argument of upload is currently ignored since this
+	// function is changed
 	emscripten_browser_file::upload(".png,.jpg,.jpeg",
 		emscripten_on_file_upload, c_ptr);
 	emscripten_set_main_loop_arg(emscripten_loop, c_ptr, -1, 1);
