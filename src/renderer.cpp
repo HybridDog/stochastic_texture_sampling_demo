@@ -19,6 +19,15 @@ Renderer::Renderer(int width, int height)
 	glGenVertexArrays(1, &m_vao);
 }
 
+Renderer::Renderer(SDL_Window *window)
+{
+	int w, h;
+	SDL_GetWindowSize(window, &w, &h);
+	setSize(w, h);
+
+	glGenVertexArrays(1, &m_vao);
+}
+
 void Renderer::toggleInterpolation()
 {
 	m_interpolation_enabled = !m_interpolation_enabled;

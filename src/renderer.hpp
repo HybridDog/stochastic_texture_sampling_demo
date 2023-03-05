@@ -18,6 +18,11 @@
 class Renderer {
 public:
 	Renderer(int width, int height);
+	Renderer(SDL_Window *window);
+	~Renderer() { glDeleteVertexArrays(1, &m_vao); }
+	Renderer(const Renderer&) = delete;
+	Renderer &operator=(const Renderer&) = delete;
+
 	void render();
 	void setSize(int width, int height);
 	Camera &getCamera() { return m_camera; }

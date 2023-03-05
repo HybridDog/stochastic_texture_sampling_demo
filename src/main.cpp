@@ -19,9 +19,16 @@
 
 
 struct Context {
+	Context(SDL_Window *window):
+		m_window{window},
+		m_renderer{window}
+	{
+	}
 	SDL_Window *m_window;
-	Renderer m_renderer{1500, 800};
+	Renderer m_renderer;
 	std::set<int> m_held_keys{};
+	bool m_mousedown{false};
+	std::array<s32, 2> mouse_pos{0, 0};
 	std::string m_image_file_to_load{""};
 	bool m_should_load_image_file{false};
 	std::chrono::time_point<std::chrono::steady_clock> m_time{
@@ -43,11 +50,12 @@ void Context::showHelp() const
 		"	c: Toggle histogram colour transformation\n"
 		"\n"
 		"Movement:\n"
+		"	Mouse drag and drop: Move up/down/left/right\n"
+		"	vertical scrolling: Zoom in/out\n"
+		"	Shift + vertical scrolling: Move up/down\n"
+		"	Shift + horizontal scrolling: Move right/left\n"
 		"	+/-: Zoom in/out. + may not work.\n"
 		"	arrow keys: Move up/down/left/right\n"
-		"	vertical scrolling: Move up/down\n"
-		"	horizontal scrolling: Move right/left\n"
-		"	Shift + vertical scrolling: Zoom in/out\n"
 	};
 	std::cout << helptext;
 #ifdef __EMSCRIPTEN__
@@ -76,7 +84,8 @@ bool Context::loop()
 	std::array acc_dir{0.0f, 0.0f, 0.0f};
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
-		if (event.type == SDL_KEYDOWN) {
+		switch (event.type) {
+		case SDL_KEYDOWN: {
 			switch (event.key.keysym.sym) {
 			case SDLK_ESCAPE:
 				return 0;
@@ -112,18 +121,35 @@ bool Context::loop()
 				break;
 			}
 			m_held_keys.insert(event.key.keysym.sym);
-		} else if (event.type == SDL_KEYUP) {
+			break;
+		} case SDL_KEYUP: {
 			m_held_keys.erase(event.key.keysym.sym);
-		} else if (event.type == SDL_MOUSEWHEEL) {
+			break;
+		} case SDL_MOUSEWHEEL: {
 			if (m_held_keys.contains(SDLK_LSHIFT)) {
-				acc_dir[2] += -2.0f * event.wheel.preciseY;
-			} else {
 				acc_dir[0] += event.wheel.preciseX;
 				acc_dir[1] += event.wheel.preciseY;
+			} else {
+				acc_dir[2] += -2.0f * event.wheel.preciseY;
 			}
-		} else if (event.type == SDL_QUIT) {
+			break;
+		} case SDL_MOUSEMOTION: {
+			if (event.motion.state == SDL_BUTTON_LMASK) {
+				std::array<float, 2> move{-1.0f * event.motion.xrel,
+					-1.0f * event.motion.yrel};
+				m_renderer.getCamera().movePos(move);
+			}
+			break;
+		} case SDL_WINDOWEVENT: {
+			if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+				m_renderer.setSize(event.window.data1, event.window.data2);
+			}
+			break;
+		} case SDL_QUIT: {
 			return false;
-		}
+		} default: {
+			break;
+		}}
 	}
 	m_renderer.getCamera().update(acc_dir, updateTime());
 	m_renderer.render();
@@ -180,9 +206,9 @@ void emscripten_on_file_upload(std::string const &filename,
 
 int main()
 {
-	SDL_Window *window{SDL_CreateWindow("mein prog", 0, 0, 1500, 800,
-		SDL_WINDOW_OPENGL)};
-	assert(window);
+	SDL_Window *window{SDL_CreateWindow(
+		"Stochastic Texture Samping Demonstration", 0, 0, 800, 600,
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE)};
 	SDL_GL_CreateContext(window);
 	GLenum err = glewInit();
 	if (err != GLEW_OK)
