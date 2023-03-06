@@ -6,7 +6,7 @@
 #include "common.hpp"
 
 
-Texture::Texture(const ImageFile &img, bool enable_interpolation)
+Texture::Texture(bool enable_interpolation)
 {
 	glGenTextures(1, &m_id);
 	bind();
@@ -15,8 +15,6 @@ Texture::Texture(const ImageFile &img, bool enable_interpolation)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	setInterpolation(enable_interpolation);
-
-	loadImage(img);
 }
 
 void Texture::loadImage(const ImageFile &img)

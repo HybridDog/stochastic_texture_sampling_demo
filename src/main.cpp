@@ -29,8 +29,6 @@ struct Context {
 	std::set<int> m_held_keys{};
 	bool m_mousedown{false};
 	std::array<s32, 2> mouse_pos{0, 0};
-	std::string m_image_file_to_load{""};
-	bool m_should_load_image_file{false};
 	std::chrono::time_point<std::chrono::steady_clock> m_time{
 		std::chrono::steady_clock::now()};
 	float updateTime();
@@ -75,12 +73,6 @@ float Context::updateTime()
 
 bool Context::loop()
 {
-	if (m_should_load_image_file) {
-		m_renderer.setImage(ImageFile{m_image_file_to_load});
-		// FIXME: delete the file here to free memory
-		m_image_file_to_load = "";
-		m_should_load_image_file = false;
-	}
 	std::array acc_dir{0.0f, 0.0f, 0.0f};
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -128,7 +120,7 @@ bool Context::loop()
 		} case SDL_MOUSEWHEEL: {
 			if (m_held_keys.contains(SDLK_LSHIFT)) {
 				acc_dir[0] += event.wheel.preciseX;
-				acc_dir[1] += event.wheel.preciseY;
+				acc_dir[1] -= event.wheel.preciseY;
 			} else {
 				acc_dir[2] += -2.0f * event.wheel.preciseY;
 			}
@@ -168,17 +160,6 @@ void emscripten_loop(void *arg)
 }
 
 Context *ptr_context;
-void on_file_decoded(const char *)
-{
-	ptr_context->m_should_load_image_file = true;
-}
-void on_file_decoded_error(const char *)
-{
-	std::cerr << "Could not decode image " <<
-		ptr_context->m_image_file_to_load << "\n";
-	// FIXME: delete the file here to free memory
-}
-
 void emscripten_on_file_upload(std::string const &filename,
 	std::string const &mime_type, std::string_view buffer, void *arg)
 {
@@ -195,9 +176,7 @@ void emscripten_on_file_upload(std::string const &filename,
 		throw std::runtime_error("Could not open " + filename + " for writing");
 	outfile.write(buffer.data(), buffer.size());
 	outfile.flush();
-	ptr_context->m_image_file_to_load = filename;
-	emscripten_run_preload_plugins(filename.c_str(), on_file_decoded,
-		on_file_decoded_error);
+	ptr_context->m_renderer.setImageLazy(filename);
 }
 #endif
 

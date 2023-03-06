@@ -8,7 +8,7 @@
 class Texture {
 public:
 	Texture();
-	Texture(const ImageFile &img, bool enable_interpolation);
+	Texture(bool enable_interpolation);
 	~Texture() { glDeleteTextures(1, &m_id); }
 	Texture(const Texture&) = delete;
 	Texture &operator=(const Texture&) = delete;

@@ -195,10 +195,9 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 } // namespace
 
 
-TextureStochastic::TextureStochastic(const ImageFile &img,
-		bool enable_interpolation)
+TextureStochastic::TextureStochastic(bool enable_interpolation)
 {
-	// Create and configure the image texture
+	// Create and configure the textures
 	glGenTextures(1, &m_id);
 	bind();
 	// Configure boundary behaviour, interpolation and mipmapping
@@ -213,8 +212,6 @@ TextureStochastic::TextureStochastic(const ImageFile &img,
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	loadImage(img);
 }
 
 void TextureStochastic::loadImage(const ImageFile &img)

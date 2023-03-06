@@ -12,7 +12,7 @@
 class TextureStochastic {
 public:
 	TextureStochastic();
-	TextureStochastic(const ImageFile &img, bool enable_interpolation);
+	TextureStochastic(bool enable_interpolation);
 	~TextureStochastic() { glDeleteTextures(1, &m_id);
 		glDeleteTextures(1, &m_lut_id); }
 	TextureStochastic(const TextureStochastic&) = delete;

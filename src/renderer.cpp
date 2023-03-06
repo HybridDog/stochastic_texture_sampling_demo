@@ -1,31 +1,60 @@
 #include <iostream>
 #include <array>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 #include "common.hpp"
 #include "renderer.hpp"
 
 
-void Renderer::setSize(int width, int height)
+#ifdef __EMSCRIPTEN__
+namespace {
+
+Renderer *renderer_current;
+void on_file_decoded(const char *)
 {
-	m_width = width;
-	m_height = height;
+	renderer_current->setImageLoaded();
+}
+void on_file_decoded_error(const char *)
+{
+	std::cerr << "Could not decode image " <<
+		renderer_current->getLoadingImage() << "\n";
+	// FIXME: delete the file here to free memory
 }
 
-Renderer::Renderer(int width, int height)
-{
-	setSize(width, height);
+}  // namespace
+#endif
 
-	// Vertex Array Object; associates attribointers and VBOs
-	glGenVertexArrays(1, &m_vao);
-}
 
 Renderer::Renderer(SDL_Window *window)
 {
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
 	setSize(w, h);
+	setImageLazy(DATA_PATH "/help_image.png");
 
 	glGenVertexArrays(1, &m_vao);
+}
+
+void Renderer::setImageLazy(const std::string &path)
+{
+	m_image_to_load = path;
+#ifdef __EMSCRIPTEN__
+	m_image_ready = false;
+	// With emscripten wait until the browser has decoded the image
+	renderer_current = this;
+	emscripten_run_preload_plugins(path.c_str(), on_file_decoded,
+		on_file_decoded_error);
+#else
+	setImageLoaded();
+#endif
+}
+
+void Renderer::setSize(int width, int height)
+{
+	m_width = width;
+	m_height = height;
 }
 
 void Renderer::toggleInterpolation()
@@ -60,7 +89,15 @@ void Renderer::setRenderRect(const std::array<float, 2> &pos1,
 
 void Renderer::render()
 {
-	//~ std::array<float, 2> invViewPortSize{1.0f / m_width, 1.0f / m_height};
+	// Lazy texture loading
+	if (m_image_ready) {
+		m_image_ready = false;
+		ImageFile img{m_image_to_load};
+		m_image_to_load = "";
+		m_texture.loadImage(img);
+		m_texture_stochastic.loadImage(img);
+		// FIXME: The file is never deleted
+	}
 
 	// Render the output to screen
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
