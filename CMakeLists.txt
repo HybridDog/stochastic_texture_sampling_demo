@@ -6,11 +6,28 @@ add_compile_options(-Os -std=c++20 -g -pipe -Wall -Wextra -Wnull-dereference
 if(EMSCRIPTEN)
 	# emcmake cmake -G Ninja -B build_emscripten
 	# cmake --build build_emscripten/
-	# cd build_emscripten/ && python3 -m http.server 9000
 	set(CMAKE_EXECUTABLE_SUFFIX .html)
-	add_compile_options(-sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -sSDL2_IMAGE_FORMATS=["png","jpg"] -fwasm-exceptions)
-	add_link_options(-Os -fwasm-exceptions --embed-file ../data@data -sMAX_WEBGL_VERSION=2 -sMIN_WEBGL_VERSION=2 --use-preload-plugins -sEXPORTED_RUNTIME_METHODS=['ccall'] -sEXPORTED_FUNCTIONS=['_main','_malloc','_free'])
-	configure_file(src/web/index.html index.html COPYONLY)
+	add_compile_options(
+		-fwasm-exceptions
+		-sUSE_SDL=2
+		-sUSE_SDL_IMAGE=2
+		-sSDL2_IMAGE_FORMATS=["png","jpg","jxl"]
+	)
+	add_link_options(
+		-Os
+		-fwasm-exceptions
+		--embed-file ../data@data
+		--use-preload-plugins
+		--shell-file=../src/web/index.html
+		-sMAX_WEBGL_VERSION=2
+		-sMIN_WEBGL_VERSION=2
+		-sEXPORTED_RUNTIME_METHODS=['ccall']
+		-sEXPORTED_FUNCTIONS=['_main','_malloc','_free']
+		-sSINGLE_FILE
+		-sALLOW_MEMORY_GROWTH
+		-sENVIRONMENT='web'
+		#~ -sMALLOC=emmalloc
+	)
 endif()
 
 add_executable(Prog

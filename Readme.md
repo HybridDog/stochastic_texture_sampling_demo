@@ -1,13 +1,21 @@
 # TODO
 
-* Bundle everything into a single html file.
-  * Somehow put the wasm and/or js into the html file
 * With Minetest's default_lava.png, green pixels appear. Perhaps the colour
   decorrelation works incorrectly or badly
-* Add a HTTP option which enables rounding uv coordinates in the shader and
-  disables interpolation. This is needed for Minetest textures.
-* Code quality and comments; perhaps somebody is going to read my code
+* Code quality and doc
+  * Comment classes and methods in hpp files
+  * Explain what this is in this readme
+  * Add license info
+* Add arguments to main and specify them on command line or as HTTP options
+  * Option for interpolation
+  * Initial camera positions
+  * URL to a texture
+* Transparency support
+  * Give transparent pixels no weight when calculating the covariance matrix
+    for the colour decorellation
+  * skip fully transparent pixels in the histogram transformation
+  * design the background
 * Support high bit depth and wide gamut images
-* Give transparent pixels no weight when calculating the covariance matrix
-  for the colour decorellation and skip fully transparent pixels in the
-  histogram transformation
+  * Investigate if SDL3 works better for this purpose
+  * Use the monitor-specific colour profile (if possible at all)
+  * Load images into linear rgb float arrays (perhaps SDL2 image supports this)
