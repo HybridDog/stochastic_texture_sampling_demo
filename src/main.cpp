@@ -49,6 +49,7 @@ void Context::showHelp() const
 		"\n"
 		"Movement:\n"
 		"	Mouse drag and drop: Move up/down/left/right\n"
+		"	Shift + Mouse drag and drop: Zoom in/out\n"
 		"	vertical scrolling: Zoom in/out\n"
 		"	Shift + vertical scrolling: Move up/down\n"
 		"	Shift + horizontal scrolling: Move right/left\n"
@@ -127,9 +128,13 @@ bool Context::loop()
 			break;
 		} case SDL_MOUSEMOTION: {
 			if (event.motion.state == SDL_BUTTON_LMASK) {
-				std::array<float, 2> move{-1.0f * event.motion.xrel,
-					-1.0f * event.motion.yrel};
-				m_renderer.getCamera().movePos(move);
+				if (m_held_keys.contains(SDLK_LSHIFT)) {
+					m_renderer.getCamera().zoom(-0.01f * event.motion.yrel);
+				} else {
+					std::array<float, 2> move{-1.0f * event.motion.xrel,
+						-1.0f * event.motion.yrel};
+					m_renderer.getCamera().movePos(move);
+				}
 			}
 			break;
 		} case SDL_WINDOWEVENT: {
