@@ -1,11 +1,15 @@
 # TODO
 
-* With Minetest's default_lava.png, green pixels appear. Perhaps the colour
+* Scrolling is too fast
+* With Minetest's default_lava.png, green pixels appear. The colour
   decorrelation works incorrectly or badly
 * Code quality and doc
   * Comment classes and methods in hpp files
   * Explain what this is in this readme
   * Add license info
+* Don't crash when dropping unsupported files
+* Support different grid scales. If I tile a 16x16 texture from Minetest to
+  48x48 in GIMP and use this as input, I get better results.
 * Add arguments to main and specify them on command line or as HTTP options
   * Option for interpolation
   * Initial camera positions

@@ -89,6 +89,7 @@ float srgb_to_linear(float v)
 		return powf((v + 0.055f) / (1.055f), 2.4f);
 }
 
+#if 1
 // Calculate a rotation matrix to decorrelate the colour channels
 float3x3 get_correlation_matrix(const std::vector<float4> &values)
 {
@@ -137,6 +138,17 @@ float3x3 get_correlation_matrix(const std::vector<float4> &values)
 		{eigenvecs_tmp[2][0],
 			eigenvecs_tmp[2][1],
 			eigenvecs_tmp[2][2]}};
+	//~ double3x3 m{
+		//~ {eigenvecs_tmp[0][0],
+			//~ eigenvecs_tmp[1][0],
+			//~ eigenvecs_tmp[2][0]},
+		//~ {eigenvecs_tmp[0][1],
+			//~ eigenvecs_tmp[1][1],
+			//~ eigenvecs_tmp[2][1]},
+		//~ {eigenvecs_tmp[0][2],
+			//~ eigenvecs_tmp[1][2],
+			//~ eigenvecs_tmp[2][2]}};
+
 	float3x3 m_f{m};
 	return m_f;
 }
@@ -155,7 +167,43 @@ void decorrelate_colours(std::vector<float4> &values,
 	inv_transform = {evs[0][0], evs[1][0], evs[2][0],
 		evs[0][1], evs[1][1], evs[2][1],
 		evs[0][2], evs[1][2], evs[2][2]};
+	//~ inv_transform = {evs[0][0], evs[0][1], evs[0][2],
+		//~ evs[1][0], evs[1][1], evs[1][2],
+		//~ evs[2][0], evs[2][1], evs[2][2]};
 }
+#else
+float3x3 get_correlation_matrix(const std::vector<float4> &values)
+{
+	// RGB to YCbCr without the offset
+	// linalg.h matrices are column-major
+	float3x3 m{
+		{0.299f, 0.587f, 0.114f},
+		{-0.168736f, -0.331364f, 0.5f},
+		{0.5f, -0.418688f, -0.081312f}
+	};
+	return transpose(m);
+}
+
+void decorrelate_colours(std::vector<float4> &values,
+	std::array<float, 9> &inv_transform)
+{
+	float3x3 evs{get_correlation_matrix(values)};
+	for (auto &v : values) {
+		const float3 &rgb{reinterpret_cast<const float3 &>(v)};
+		float3 rotated{mul(evs, rgb)};
+		v[0] = rotated[0];
+		v[1] = rotated[1];
+		v[2] = rotated[2];
+	}
+	// YCbCr to RGB without the offset
+	// column-major
+	inv_transform = {1.0f, 1.0f, 1.0f,
+		0.0f, -0.34414f, 1.772f,
+		1.402f, -0.71414f, 0.0f
+	};
+}
+#endif
+
 
 std::vector<float4> histogram_transformation(std::vector<float4> &values)
 {
