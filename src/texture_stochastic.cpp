@@ -89,7 +89,30 @@ float srgb_to_linear(float v)
 		return powf((v + 0.055f) / (1.055f), 2.4f);
 }
 
-#if 1
+float3 srgb_to_linear(const float3 &col)
+{
+	return {srgb_to_linear(col[0]), srgb_to_linear(col[1]),
+		srgb_to_linear(col[2])};
+}
+
+// column-major transformation matrix from bt.709/sRGB primaries to LMS
+constexpr float3x3 rgb_to_lms{
+	{0.4122214708f, 0.2119034982f, 0.0883024619f},
+	{0.5363325363f, 0.6806995451f, 0.2817188376f},
+	{0.0514459929f, 0.1073969566f, 0.6299787005f}
+};
+
+// Conversion to a perceptual colour space based on the conversion formula for
+// OKLab
+float3 srgb_to_perceptual(const float3 &col_srgb)
+{
+	float3 col{srgb_to_linear(col_srgb)};
+	col = mul(rgb_to_lms, col);
+	col = {std::pow(col[0], 1.0f / 3.0f), std::pow(col[1], 1.0f / 3.0f),
+		std::pow(col[2], 1.0f / 3.0f)};
+	return col;
+}
+
 // Calculate a rotation matrix to decorrelate the colour channels
 float3x3 get_correlation_matrix(const std::vector<float4> &values)
 {
@@ -160,39 +183,6 @@ void decorrelate_colours(std::vector<float4> &values,
 		evs[0][1], evs[1][1], evs[2][1],
 		evs[0][2], evs[1][2], evs[2][2]};
 }
-#else
-float3x3 get_correlation_matrix(const std::vector<float4> &values)
-{
-	// RGB to YCbCr without the offset
-	// linalg.h matrices are column-major
-	float3x3 m{
-		{0.299f, 0.587f, 0.114f},
-		{-0.168736f, -0.331364f, 0.5f},
-		{0.5f, -0.418688f, -0.081312f}
-	};
-	return transpose(m);
-}
-
-void decorrelate_colours(std::vector<float4> &values,
-	std::array<float, 9> &inv_transform)
-{
-	float3x3 evs{get_correlation_matrix(values)};
-	for (auto &v : values) {
-		const float3 &rgb{reinterpret_cast<const float3 &>(v)};
-		float3 rotated{mul(evs, rgb)};
-		v[0] = rotated[0];
-		v[1] = rotated[1];
-		v[2] = rotated[2];
-	}
-	// YCbCr to RGB without the offset
-	// column-major
-	inv_transform = {1.0f, 1.0f, 1.0f,
-		0.0f, -0.34414f, 1.772f,
-		1.402f, -0.71414f, 0.0f
-	};
-}
-#endif
-
 
 std::vector<float4> histogram_transformation(std::vector<float4> &values)
 {
@@ -215,8 +205,6 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 		for (int k{0}; k < LUT_WIDTH; ++k) {
 			float U{CDF((k + 0.5f) / LUT_WIDTH, GAUSSIAN_AVERAGE, GAUSSIAN_STD)};
 			lut[k][c] = values[perm[static_cast<int>(floor(U * num_pixels))]][c];
-			//~ lut[k][i] = U;
-			//~ lut[k][i] = (float)k/LUT_WIDTH;
 		}
 
 		// Do the histogram transformation
@@ -256,15 +244,17 @@ void TextureStochastic::loadImage(const ImageFile &img)
 	m_width = img.getWidth();
 	m_height = img.getHeight();
 
-	// Load the image and convert it to floats in linear colourspace
+	// Load the image and convert it to floats in a perceptual colourspace
 	std::vector<float4> pixels;
 	pixels.reserve(m_width * m_height);
 	byte4 *pixels_raw{reinterpret_cast<byte4 *>(img.getPixels())};
 	for (int i = 0; i < m_width * m_height; ++i) {
 		float4 rgba{pixels_raw[i] / 255.0f};
-		rgba[0] = srgb_to_linear(rgba[0]);
-		rgba[1] = srgb_to_linear(rgba[1]);
-		rgba[2] = srgb_to_linear(rgba[2]);
+		float3 col{rgba[0], rgba[1], rgba[2]};
+		col = srgb_to_perceptual(col);
+		rgba[0] = col[0];
+		rgba[1] = col[1];
+		rgba[2] = col[2];
 		pixels.emplace_back(rgba);
 	}
 

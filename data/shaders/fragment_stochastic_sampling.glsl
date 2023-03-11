@@ -24,6 +24,16 @@ vec3 LinearToSRGB(vec3 rgb)
 	);
 }
 
+// LMS to sRGB/bt.709 primaries transformation matrix; column-major
+const mat3 lms_to_rgb = mat3(
+	4.0767416621, -1.2684380046, -0.0041960863,
+	-3.3077115913, 2.6097574011, -0.7034186147,
+	0.2309699292, -0.3413193965, 1.7076147010
+);
+vec3 PerceptualToSRGB(vec3 col)
+{
+	return LinearToSRGB(lms_to_rgb * (col * col * col));
+}
 
 // Copied from the deliot2019_openGLdemo
 // (https://eheitzresearch.wordpress.com/738-2/)
@@ -128,12 +138,12 @@ void main()
 		color.r	= texture(colorLUT, vec2(G.r, 0.0)).r;
 		color.g	= texture(colorLUT, vec2(G.g, 0.0)).g;
 		color.b	= texture(colorLUT, vec2(G.b, 0.0)).b;
-		color = inverseDecorrelation * color;
+		color = PerceptualToSRGB(inverseDecorrelation * color);
 	} else {
-		color = G;
+		color = LinearToSRGB(G);
 	}
 
 	vec4 col;
-	col.rgb = LinearToSRGB(color);
+	col.rgb = color;
 	FragColor = col;
 }
