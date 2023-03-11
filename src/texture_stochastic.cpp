@@ -102,15 +102,25 @@ constexpr float3x3 rgb_to_lms{
 	{0.0514459929f, 0.1073969566f, 0.6299787005f}
 };
 
-// Conversion to a perceptual colour space based on the conversion formula for
-// OKLab
-float3 srgb_to_perceptual(const float3 &col_srgb)
+constexpr float3x3 oklab_mat{
+	{0.2104542553f, 1.9779984951f, 0.0259040371f},
+	{0.7936177850f, -2.4285922050f, 0.7827717662f},
+	{-0.0040720468f, 0.4505937099f, -0.8086757660f}
+};
+
+constexpr float3x3 oklab_mat_inv{
+	{1.0f, 1.0f, 1.0f},
+	{0.3963377774f, -0.1055613458f, -0.0894841775f},
+	{0.2158037573f, -0.0638541728f, -1.2914855480f}
+};
+
+float3 srgb_to_oklab(const float3 &col_srgb)
 {
 	float3 col{srgb_to_linear(col_srgb)};
 	col = mul(rgb_to_lms, col);
 	col = {std::pow(col[0], 1.0f / 3.0f), std::pow(col[1], 1.0f / 3.0f),
 		std::pow(col[2], 1.0f / 3.0f)};
-	return col;
+	return mul(oklab_mat, col);
 }
 
 // Calculate a rotation matrix to decorrelate the colour channels
@@ -177,11 +187,11 @@ void decorrelate_colours(std::vector<float4> &values,
 		v[1] = rotated[1];
 		v[2] = rotated[2];
 	}
-	// linalg.h and GLSL uniform matrices are column-major, and evs needs to be
-	// inverted here (equivalently: transposed)
-	inv_transform = {evs[0][0], evs[1][0], evs[2][0],
-		evs[0][1], evs[1][1], evs[2][1],
-		evs[0][2], evs[1][2], evs[2][2]};
+	float3x3 inv{mul(oklab_mat_inv, transpose(evs))};
+	// linalg.h and GLSL uniform matrices are column-major
+	inv_transform = {inv[0][0], inv[0][1], inv[0][2],
+		inv[1][0], inv[1][1], inv[1][2],
+		inv[2][0], inv[2][1], inv[2][2]};
 }
 
 std::vector<float4> histogram_transformation(std::vector<float4> &values)
@@ -251,7 +261,7 @@ void TextureStochastic::loadImage(const ImageFile &img)
 	for (int i = 0; i < m_width * m_height; ++i) {
 		float4 rgba{pixels_raw[i] / 255.0f};
 		float3 col{rgba[0], rgba[1], rgba[2]};
-		col = srgb_to_perceptual(col);
+		col = srgb_to_oklab(col);
 		rgba[0] = col[0];
 		rgba[1] = col[1];
 		rgba[2] = col[2];

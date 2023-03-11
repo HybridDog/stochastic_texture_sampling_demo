@@ -16,12 +16,14 @@ which works after downloading offline in a web browser.
 
 The decorrelation and gaussianization of colours is implemented as follows:
 * Load an input texture, which is usually in the sRGB colour space
-* Convert the colours of each pixel to OKLab (or almost OKLab since the final
-  matrix multiplication is excluded)
+* Convert the colours of each pixel to OKLab
 * Calculate a decorrelation matrix with Principal Component Analysis from all
-  these colour values, and apply this matrix on the colours
+  these colour values and apply this matrix on the colours.
+  Additionally, create a matrix which inverts this decorrelation and the last
+  matrix multiplication step of the OKLab conversion.
 * Perform a histogram transformation for each component of the decorrelated
-  colour vector and lookup tables for the inverse histogram transformation
+  colour vector. Additionally, create lookup tables for the inverse histogram
+  transformation.
 
 Experiments with [SuperTux' snow tiles](https://github.com/SuperTux/supertux/blob/baf72d708b982789c0be8ca912d3b59a76e17c0a/data/images/tiles/snow/convex.png)
 and [Minetest's `default_lava.png`](https://github.com/minetest/minetest_game/blob/aeb27c4db6959d20e525f5754b88d107b168e957/mods/default/textures/default_lava.png)
@@ -33,31 +35,47 @@ problems are less visible, and a perceptual colour space appears to give the
 best results of the three for these example textures.
 
 
+## Missing Features
+
+It is possible to extend this demonstration with more not-yet-implemented
+features, for example:
+* Support different grid scales.
+  Currently, a hardcoded scaling of `3.464` is used in the triangle grid.
+  For certain 16x16 textures a different scaling can give better results, where
+  the stochastic sampling is less aggressive, i.e. patterns in the texture are
+  better preserved at the cost of slightly visible tiling.
+* Arguments in the URL (HTTP parameters) and command-line.
+  To showcase an example texture with stochastic texture sampling, it can be
+  helpful to initialise the state of the application to a desired state.
+  * Option for interpolation
+  * Initial camera positions
+  * Triangle grid scaling
+  * URL to a texture
+* Transparency support
+  * Give transparent pixels no weight when calculating the covariance matrix
+    for the colour decorrelation
+  * Skip fully transparent pixels in the histogram transformation
+  * Design the background
+* Support high bit depth and wide gamut images
+  * Investigate if SDL3 works better for this purpose
+  * Use the monitor-specific colour profile (if possible at all)
+  * Load images into linear rgb float arrays (perhaps SDL2 image supports this)
+* Support mipmapping.
+  The original demonstration uses 2D lookup tables to accout for colour problems
+  when mipmaps are used. This is not yet implemented here for simplicity.
+* Texture drag and drop without a browser.
+  Currently, the texture can only be changed the application is compiled with
+  emscripten.
+  With SDL2 drag and drop, it should also be possible to do this without a
+  browser.
+
 
 # TODO
 
 * Scrolling is too fast
-* With the leopard texture and my modified default_gravel.png,
-  the colour decorrelation still doesn't look very
-  good. Experiment what happens if I use OKLab without PCA.
-  Perhaps it works with OKLab if I do not omit OKLab's matrix multiplication.
 * Code quality and doc
   * Comment classes and methods in hpp files
   * Explain what this is in this readme
   * Add license info
 * Don't crash when dropping unsupported files
-* Support different grid scales. If I tile a 16x16 texture from Minetest to
-  48x48 in GIMP and use this as input, I get better results.
-* Add arguments to main and specify them on command line or as HTTP options
-  * Option for interpolation
-  * Initial camera positions
-  * URL to a texture
-* Transparency support
-  * Give transparent pixels no weight when calculating the covariance matrix
-    for the colour decorellation
-  * skip fully transparent pixels in the histogram transformation
-  * design the background
-* Support high bit depth and wide gamut images
-  * Investigate if SDL3 works better for this purpose
-  * Use the monitor-specific colour profile (if possible at all)
-  * Load images into linear rgb float arrays (perhaps SDL2 image supports this)
+* Implement some of the missing features
