@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13)
 project(prog)
 
 add_compile_options(-Os -std=c++20 -g -pipe -Wall -Wextra -Wnull-dereference
-	-Wmisleading-indentation -Wno-unused-parameter)
+	-Wmisleading-indentation -Wno-unused-parameter -Wfloat-conversion)
 if(EMSCRIPTEN)
 	# emcmake cmake -G Ninja -B build_emscripten
 	# cmake --build build_emscripten/

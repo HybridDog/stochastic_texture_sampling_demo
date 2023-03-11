@@ -130,24 +130,14 @@ float3x3 get_correlation_matrix(const std::vector<float4> &values)
 	ComputeEigenValuesAndVectors(cov_tmp, eigenvecs_tmp, eigenvals_tmp);
 	double3x3 m{
 		{eigenvecs_tmp[0][0],
-			eigenvecs_tmp[0][1],
-			eigenvecs_tmp[0][2]},
-		{eigenvecs_tmp[1][0],
+			eigenvecs_tmp[1][0],
+			eigenvecs_tmp[2][0]},
+		{eigenvecs_tmp[0][1],
 			eigenvecs_tmp[1][1],
-			eigenvecs_tmp[1][2]},
-		{eigenvecs_tmp[2][0],
-			eigenvecs_tmp[2][1],
+			eigenvecs_tmp[2][1]},
+		{eigenvecs_tmp[0][2],
+			eigenvecs_tmp[1][2],
 			eigenvecs_tmp[2][2]}};
-	//~ double3x3 m{
-		//~ {eigenvecs_tmp[0][0],
-			//~ eigenvecs_tmp[1][0],
-			//~ eigenvecs_tmp[2][0]},
-		//~ {eigenvecs_tmp[0][1],
-			//~ eigenvecs_tmp[1][1],
-			//~ eigenvecs_tmp[2][1]},
-		//~ {eigenvecs_tmp[0][2],
-			//~ eigenvecs_tmp[1][2],
-			//~ eigenvecs_tmp[2][2]}};
 
 	float3x3 m_f{m};
 	return m_f;
@@ -164,12 +154,11 @@ void decorrelate_colours(std::vector<float4> &values,
 		v[1] = rotated[1];
 		v[2] = rotated[2];
 	}
+	// linalg.h and GLSL uniform matrices are column-major, and evs needs to be
+	// inverted here (equivalently: transposed)
 	inv_transform = {evs[0][0], evs[1][0], evs[2][0],
 		evs[0][1], evs[1][1], evs[2][1],
 		evs[0][2], evs[1][2], evs[2][2]};
-	//~ inv_transform = {evs[0][0], evs[0][1], evs[0][2],
-		//~ evs[1][0], evs[1][1], evs[1][2],
-		//~ evs[2][0], evs[2][1], evs[2][2]};
 }
 #else
 float3x3 get_correlation_matrix(const std::vector<float4> &values)

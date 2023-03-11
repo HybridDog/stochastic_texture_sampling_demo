@@ -58,7 +58,7 @@ int ComputeEigenValuesAndVectors(double A[3][3], double Q[3][3], double w[3])
 	// Calculate SQR(tr(A))
 	sd = 0.0;
 	for (int i = 0; i < n; i++)
-		sd += abs(w[i]);
+		sd += std::abs(w[i]);
 	sd = sd * sd;
 
 	// Main iteration loop
@@ -68,7 +68,7 @@ int ComputeEigenValuesAndVectors(double A[3][3], double Q[3][3], double w[3])
 		so = 0.0;
 		for (int p = 0; p < n; p++)
 			for (int q = p + 1; q < n; q++)
-				so += abs(A[p][q]);
+				so += std::abs(A[p][q]);
 		if (so == 0.0)
 			return 0;
 
@@ -82,17 +82,17 @@ int ComputeEigenValuesAndVectors(double A[3][3], double Q[3][3], double w[3])
 		{
 			for (int q = p + 1; q < n; q++)
 			{
-				g = 100.0 * abs(A[p][q]);
-				if (nIter > 4 && abs(w[p]) + g == abs(w[p])
-					&& abs(w[q]) + g == abs(w[q]))
+				g = 100.0 * std::abs(A[p][q]);
+				if (nIter > 4 && std::abs(w[p]) + g == std::abs(w[p])
+					&& std::abs(w[q]) + g == std::abs(w[q]))
 				{
 					A[p][q] = 0.0;
 				}
-				else if (abs(A[p][q]) > thresh)
+				else if (std::abs(A[p][q]) > thresh)
 				{
 					// Calculate Jacobi transformation
 					h = w[q] - w[p];
-					if (abs(h) + g == abs(h))
+					if (std::abs(h) + g == std::abs(h))
 					{
 						t = A[p][q] / h;
 					}
