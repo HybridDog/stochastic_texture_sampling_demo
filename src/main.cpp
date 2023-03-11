@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <iostream>
 #include <set>
+#include <algorithm>
 #include <chrono>
 
 #include <SDL2/SDL.h>
@@ -40,21 +41,19 @@ void Context::showHelp() const
 {
 	const std::string helptext{
 		"General:\n"
-		"	h: Show this help\n"
-		"\n"
-		"Image-related:\n"
-		"	Mouse drag and drop: Load an image\n"
-		"	i: Toggle between nearest neighbour and linear interpolation\n"
-		"	c: Toggle histogram colour transformation\n"
+		"	h:   Show this help\n"
+		"	Mouse drag and drop:   Load an image\n"
 		"\n"
 		"Movement:\n"
-		"	Mouse drag and drop: Move up/down/left/right\n"
-		"	Shift + Mouse drag and drop: Zoom in/out\n"
-		"	vertical scrolling: Zoom in/out\n"
-		"	Shift + vertical scrolling: Move up/down\n"
-		"	Shift + horizontal scrolling: Move right/left\n"
-		"	+/-: Zoom in/out. + may not work.\n"
-		"	arrow keys: Move up/down/left/right\n"
+		"	Mouse drag and drop:   Move up/down/left/right\n"
+		"	arrow keys:   Move up/down/left/right\n"
+		"	Shift + Mouse drag and drop:   Zoom in/out\n"
+		"	.,+/-:   Zoom in/out. + may not work in the browser.\n"
+		"\n"
+		"Configuration:\n"
+		"	i:   Toggle between nearest neighbour and linear interpolation\n"
+		"	c:   Toggle histogram colour transformation\n"
+		"	s + Mouse drag and drop:   Adjust the grid scaling\n"
 	};
 	std::cout << helptext;
 #ifdef __EMSCRIPTEN__
@@ -81,7 +80,7 @@ bool Context::loop()
 		case SDL_KEYDOWN: {
 			switch (event.key.keysym.sym) {
 			case SDLK_ESCAPE:
-				return 0;
+				return false;
 			case SDLK_LEFT:
 				acc_dir[0] -= 1.0f;
 				break;
@@ -94,6 +93,7 @@ bool Context::loop()
 			case SDLK_DOWN:
 				acc_dir[1] += 1.0f;
 				break;
+			case '.':
 			case '+':
 				// + does not work in firefox
 				acc_dir[2] -= 1.0f;
@@ -118,18 +118,15 @@ bool Context::loop()
 		} case SDL_KEYUP: {
 			m_held_keys.erase(event.key.keysym.sym);
 			break;
-		} case SDL_MOUSEWHEEL: {
-			if (m_held_keys.contains(SDLK_LSHIFT)) {
-				acc_dir[0] += event.wheel.preciseX;
-				acc_dir[1] -= event.wheel.preciseY;
-			} else {
-				acc_dir[2] += -2.0f * event.wheel.preciseY;
-			}
-			break;
 		} case SDL_MOUSEMOTION: {
 			if (event.motion.state == SDL_BUTTON_LMASK) {
 				if (m_held_keys.contains(SDLK_LSHIFT)) {
-					m_renderer.getCamera().zoom(-0.01f * event.motion.yrel);
+					m_renderer.getCamera().zoom(-0.005f * event.motion.yrel);
+				} else if (m_held_keys.contains('s')) {
+					float grid_scaling{m_renderer.getGridScaling()};
+					grid_scaling *= 1.0f - 0.005f * event.motion.yrel;
+					grid_scaling = std::clamp(grid_scaling, 0.1f, 3.464f);
+					m_renderer.setGridScaling(grid_scaling);
 				} else {
 					std::array<float, 2> move{-1.0f * event.motion.xrel,
 						-1.0f * event.motion.yrel};

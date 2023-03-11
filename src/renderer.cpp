@@ -147,6 +147,8 @@ void Renderer::render()
 		m_texture_stochastic.getInverseDecorrelation());
 	m_shader_program_stochastic_sampling.setUniform("interpolationEnabled",
 		m_interpolation_enabled);
+	m_shader_program_stochastic_sampling.setUniform("gridScaling",
+		m_grid_scaling);
 	m_shader_program_stochastic_sampling.setUniform(
 		"colourTransformationEnabled", m_colour_transformation_enabled);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

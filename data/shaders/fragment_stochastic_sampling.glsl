@@ -10,6 +10,7 @@ uniform float scale;
 uniform mat3 inverseDecorrelation;
 uniform bool interpolationEnabled;
 uniform bool colourTransformationEnabled;
+uniform float gridScaling;
 
 
 // from https://www.shadertoy.com/view/ttByDw
@@ -43,7 +44,7 @@ void TriangleGrid(vec2 uv,
 	out ivec2 vertex1, out ivec2 vertex2, out ivec2 vertex3)
 {
 	// Scaling of the input
-	uv *= 3.464; // 2 * sqrt(3)
+	uv *= gridScaling;
 
 	// Skew input space into simplex triangle grid
 	const mat2 gridToSkewedGrid = mat2(1.0, 0.0, -0.57735027, 1.15470054);

@@ -39,11 +39,6 @@ best results of the three for these example textures.
 
 It is possible to extend this demonstration with more not-yet-implemented
 features, for example:
-* Support different grid scales.
-  Currently, a hardcoded scaling of `3.464` is used in the triangle grid.
-  For certain 16x16 textures a different scaling can give better results, where
-  the stochastic sampling is less aggressive, i.e. patterns in the texture are
-  better preserved at the cost of slightly visible tiling.
 * Arguments in the URL (HTTP parameters) and command-line.
   To showcase an example texture with stochastic texture sampling, it can be
   helpful to initialise the state of the application to a desired state.
@@ -72,7 +67,6 @@ features, for example:
 
 # TODO
 
-* Scrolling is too fast
 * Code quality and doc
   * Comment classes and methods in hpp files
   * Explain what this is in this readme

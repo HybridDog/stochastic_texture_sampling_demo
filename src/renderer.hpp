@@ -29,7 +29,9 @@ public:
 	void setImageLazy(const std::string &path) const;
 	void toggleInterpolation();
 	void toggleColourTransformation() {
-		m_colour_transformation_enabled = !m_colour_transformation_enabled; };
+		m_colour_transformation_enabled = !m_colour_transformation_enabled; }
+	float getGridScaling() const { return m_grid_scaling; }
+	void setGridScaling(float s) { m_grid_scaling = s; }
 
 	// Specify that m_image_to_load is ready to be loaded
 	void setImageLoaded() { m_image_ready = true; }
@@ -45,6 +47,7 @@ private:
 	int m_height{0};
 	bool m_interpolation_enabled{false};
 	bool m_colour_transformation_enabled{true};
+	float m_grid_scaling{3.464f};  // 2 * sqrt(3)
 
 	// If true, the image file m_image_to_load is loaded and put into the
 	// textures before the next frame is rendered

@@ -9,13 +9,11 @@
 #include "linalg.h"
 using namespace linalg::aliases;
 
-// copy-pasted from the original demo
-#define GAUSSIAN_AVERAGE 0.5f // Expectation of the Gaussian distribution
-#define GAUSSIAN_STD 0.16666f // Std of the Gaussian distribution
-#define LUT_WIDTH 128 // Size of the look-up table
-
 
 namespace {
+
+// Lookup table size
+constexpr int LUT_WIDTH{128};
 
 // math functions copy-pasted from the official demo
 
@@ -96,19 +94,19 @@ float3 srgb_to_linear(const float3 &col)
 }
 
 // column-major transformation matrix from bt.709/sRGB primaries to LMS
-constexpr float3x3 rgb_to_lms{
+constexpr float3x3 RGB_TO_LMS{
 	{0.4122214708f, 0.2119034982f, 0.0883024619f},
 	{0.5363325363f, 0.6806995451f, 0.2817188376f},
 	{0.0514459929f, 0.1073969566f, 0.6299787005f}
 };
 
-constexpr float3x3 oklab_mat{
+constexpr float3x3 OKLAB_MAT{
 	{0.2104542553f, 1.9779984951f, 0.0259040371f},
 	{0.7936177850f, -2.4285922050f, 0.7827717662f},
 	{-0.0040720468f, 0.4505937099f, -0.8086757660f}
 };
 
-constexpr float3x3 oklab_mat_inv{
+constexpr float3x3 OKLAB_MAT_INV{
 	{1.0f, 1.0f, 1.0f},
 	{0.3963377774f, -0.1055613458f, -0.0894841775f},
 	{0.2158037573f, -0.0638541728f, -1.2914855480f}
@@ -117,10 +115,10 @@ constexpr float3x3 oklab_mat_inv{
 float3 srgb_to_oklab(const float3 &col_srgb)
 {
 	float3 col{srgb_to_linear(col_srgb)};
-	col = mul(rgb_to_lms, col);
+	col = mul(RGB_TO_LMS, col);
 	col = {std::pow(col[0], 1.0f / 3.0f), std::pow(col[1], 1.0f / 3.0f),
 		std::pow(col[2], 1.0f / 3.0f)};
-	return mul(oklab_mat, col);
+	return mul(OKLAB_MAT, col);
 }
 
 // Calculate a rotation matrix to decorrelate the colour channels
@@ -163,13 +161,13 @@ float3x3 get_correlation_matrix(const std::vector<float4> &values)
 	ComputeEigenValuesAndVectors(cov_tmp, eigenvecs_tmp, eigenvals_tmp);
 	double3x3 m{
 		{eigenvecs_tmp[0][0],
-			eigenvecs_tmp[1][0],
-			eigenvecs_tmp[2][0]},
-		{eigenvecs_tmp[0][1],
+			eigenvecs_tmp[0][1],
+			eigenvecs_tmp[0][2]},
+		{eigenvecs_tmp[1][0],
 			eigenvecs_tmp[1][1],
-			eigenvecs_tmp[2][1]},
-		{eigenvecs_tmp[0][2],
-			eigenvecs_tmp[1][2],
+			eigenvecs_tmp[1][2]},
+		{eigenvecs_tmp[2][0],
+			eigenvecs_tmp[2][1],
 			eigenvecs_tmp[2][2]}};
 
 	float3x3 m_f{m};
@@ -187,12 +185,15 @@ void decorrelate_colours(std::vector<float4> &values,
 		v[1] = rotated[1];
 		v[2] = rotated[2];
 	}
-	float3x3 inv{mul(oklab_mat_inv, transpose(evs))};
+	float3x3 inv{mul(OKLAB_MAT_INV, transpose(evs))};
 	// linalg.h and GLSL uniform matrices are column-major
 	inv_transform = {inv[0][0], inv[0][1], inv[0][2],
 		inv[1][0], inv[1][1], inv[1][2],
 		inv[2][0], inv[2][1], inv[2][2]};
 }
+
+constexpr float GAUSSIAN_AVERAGE{0.5f};
+constexpr float GAUSSIAN_STD{0.16666f};
 
 std::vector<float4> histogram_transformation(std::vector<float4> &values)
 {
