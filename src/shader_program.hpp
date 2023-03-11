@@ -6,14 +6,21 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
-//~ #include <GL/gl.h>
 
 
 class ShaderProgram {
 public:
-	ShaderProgram(const std::string &path_vertex_shader, const std::string &path_fragment_shader);
+	// Load and compile a vertex and fragment shader from the file system
+	ShaderProgram(const std::string &path_vertex_shader,
+		const std::string &path_fragment_shader);
+	~ShaderProgram() { glDeleteProgram(m_shader_program); };
+	ShaderProgram(const ShaderProgram&) = delete;
+	ShaderProgram &operator=(const ShaderProgram&) = delete;
+
+	// Select the shader program for rendering
 	void use() const { glUseProgram(m_shader_program); }
 
+	// Overloaded function to set a uniform of the shader
 	void setUniform(const std::string &name, float value) const
 		{ glUniform1f(glGetUniformLocation(m_shader_program, name.c_str()),
 			value); };

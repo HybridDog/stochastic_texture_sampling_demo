@@ -22,18 +22,24 @@ public:
 	Renderer(const Renderer&) = delete;
 	Renderer &operator=(const Renderer&) = delete;
 
+	// Render a frame
 	void render();
-	void setImageLazy(const std::string &path);
+	// Pass the size of the to-be-rendered frame
 	void setSize(int width, int height);
+
 	Camera &getCamera() { return m_camera; }
-	void setImageLazy(const std::string &path) const;
+	// Set an image which is to be loaded and decoded once it is ready
+	void setImageLazy(const std::string &path);
+
+	// Methods to configure stochastic texture sampling parameters
 	void toggleInterpolation();
 	void toggleColourTransformation() {
 		m_colour_transformation_enabled = !m_colour_transformation_enabled; }
 	float getGridScaling() const { return m_grid_scaling; }
 	void setGridScaling(float s) { m_grid_scaling = s; }
 
-	// Specify that m_image_to_load is ready to be loaded
+	// Callback helper functions to specify that m_image_to_load is ready to be
+	// loaded and to get path of the current to-be-loaded image
 	void setImageLoaded() { m_image_ready = true; }
 	std::string &getLoadingImage() { return m_image_to_load; }
 

@@ -67,9 +67,6 @@ features, for example:
 
 # TODO
 
-* Code quality and doc
-  * Comment classes and methods in hpp files
-  * Explain what this is in this readme
-  * Add license info
+* Add license info
 * Don't crash when dropping unsupported files
 * Implement some of the missing features

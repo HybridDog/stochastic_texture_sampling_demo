@@ -32,6 +32,7 @@ endif()
 
 add_executable(Prog
 	src/main.cpp
+	src/context.cpp
 	src/image_file.cpp
 	src/renderer.cpp
 	src/camera.cpp
