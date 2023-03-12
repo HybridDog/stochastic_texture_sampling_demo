@@ -42,6 +42,14 @@ jobs:
       - uses: mymindstorm/setup-emsdk@v11
         with:
           actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
+      - name: Setup Ninja
+        uses: ashutoshvarma/setup-ninja@master
+        with:
+          version: 1.11.1
+      - name: Install SDL2
+        run: |
+          sudo apt update
+          sudo apt install libsdl2-dev libsdl2-image-dev
       - name: Build
         run: |
           emcmake cmake -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always" -G Ninja -B build_emscripten
