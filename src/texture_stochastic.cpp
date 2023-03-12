@@ -3,10 +3,10 @@
 #include <iostream>
 #include <cmath>
 
+#include "external/jacobi.h"
+#include "external/linalg.h"
 #include "texture_stochastic.hpp"
 #include "common.hpp"
-#include "jacobi.h"
-#include "linalg.h"
 using namespace linalg::aliases;
 
 

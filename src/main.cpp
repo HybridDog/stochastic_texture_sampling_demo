@@ -7,10 +7,10 @@
 #include <emscripten.h>
 #endif
 
-#include "context.hpp"
 #ifdef __EMSCRIPTEN__
-#include "emscripten-browser-file/emscripten_browser_file.h"
+#include "external/emscripten-browser-file/emscripten_browser_file.h"
 #endif
+#include "context.hpp"
 
 
 #ifdef __EMSCRIPTEN__

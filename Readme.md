@@ -62,9 +62,8 @@ features, for example:
   With SDL2 drag and drop, it should also be possible to do this without a
   browser.
 
+Pull requests are welcome.
 
 # TODO
 
-* Add license info
 * Don't crash when dropping unsupported files
-* Implement some of the missing features

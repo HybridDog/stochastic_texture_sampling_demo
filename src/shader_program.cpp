@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "external/glutil.hpp"
 #include "shader_program.hpp"
-#include "glutil.hpp"
 
 
 namespace {

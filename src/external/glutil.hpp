@@ -1,4 +1,7 @@
-// Copied from SuperTux, GPLv3
+// Copied and modified from SuperTux, GPLv3
+// https://github.com/SuperTux/supertux/blob/46cdcaba3598029745bc3da955d2ede0c139db72/src/video/glutil.hpp
+#pragma once
+
 #include <sstream>
 #include <stdexcept>
 

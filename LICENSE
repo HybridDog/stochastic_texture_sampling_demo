@@ -1,0 +1,8 @@
+Code in `src/external` has its own licenses as described in the respective
+files.
+
+Some code snippets in the `TextureStochastic` and stochastic texture sampling
+fragment shader implementation are copy-pasted from the stochastic texture
+sampling demo by Thomas Deliot and Eric Heitz which probably has no license.
+
+License of the remaining files: MIT
