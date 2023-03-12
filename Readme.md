@@ -63,7 +63,3 @@ features, for example:
   browser.
 
 Pull requests are welcome.
-
-# TODO
-
-* Don't crash when dropping unsupported files

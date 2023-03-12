@@ -92,10 +92,14 @@ void Renderer::render()
 	// Lazy texture loading
 	if (m_image_ready) {
 		m_image_ready = false;
-		ImageFile img{m_image_to_load};
+		try {
+			ImageFile img{m_image_to_load};
+			m_texture.loadImage(img);
+			m_texture_stochastic.loadImage(img);
+		} catch (std::runtime_error e) {
+			std::cerr << e.what() << std::endl;;
+		}
 		m_image_to_load = "";
-		m_texture.loadImage(img);
-		m_texture_stochastic.loadImage(img);
 		// FIXME: The file is never deleted
 	}
 
