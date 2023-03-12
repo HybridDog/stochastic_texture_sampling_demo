@@ -41,16 +41,14 @@ It is possible to extend this demonstration with more not-yet-implemented
 features, for example:
 * Arguments in the URL (HTTP parameters) and command-line.
   To showcase an example texture with stochastic texture sampling, it can be
-  helpful to initialise the state of the application to a desired state.
+  helpful to initialise the state of the application to a desired one.
   * Option for interpolation
   * Initial camera positions
   * Triangle grid scaling
   * URL to a texture
-* Transparency support
-  * Give transparent pixels no weight when calculating the covariance matrix
-    for the colour decorrelation
-  * Skip fully transparent pixels in the histogram transformation
-  * Design the background
+* Transparency support.
+  With a texture with either fully transparent or opaque pixels, the colours
+  currently look wrong (too dark).
 * Support high bit depth and wide gamut images
   * Investigate if SDL3 works better for this purpose
   * Use the monitor-specific colour profile (if possible at all)

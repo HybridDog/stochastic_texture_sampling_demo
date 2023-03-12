@@ -10,8 +10,25 @@ uniform float scale;
 uniform mat3 inverseDecorrelation;
 uniform bool interpolationEnabled;
 uniform bool colourTransformationEnabled;
+uniform bool channelVisualisationEnabled;
 uniform float gridScaling;
 
+
+// Add background and remove col's transparency
+vec4 applyBackground(vec4 col)
+{
+	if (col.a == 1.0)
+		return col;
+	vec2 v = mod(gl_FragCoord.xy + vec2(0.5), 40.0) - 20.0;
+	vec3 bgcol;
+	if (v.x * v.y > 0.0)
+		bgcol = vec3(0.06663, 0.07819, 0.10702);
+	else
+		bgcol = vec3(0.80695, 0.85499, 0.88792);
+	col.rgb = mix(bgcol, col.rgb, col.a);
+	col.a = 1.0;
+	return col;
+}
 
 // from https://www.shadertoy.com/view/ttByDw
 // for converting from linear to sRGB
@@ -31,9 +48,9 @@ const mat3 lms_to_rgb = mat3(
 	-3.3077115913, 2.6097574011, -0.7034186147,
 	0.2309699292, -0.3413193965, 1.7076147010
 );
-vec3 PerceptualToSRGB(vec3 col)
+vec3 PerceptualToLinear(vec3 col)
 {
-	return LinearToSRGB(lms_to_rgb * (col * col * col));
+	return lms_to_rgb * (col * col * col);
 }
 
 // Copied from the deliot2019_openGLdemo
@@ -121,30 +138,44 @@ void main()
 	vec2 duvdy = dFdy(uv);
 
 	// Fetch Gaussian input
-	vec3 G1 = textureGrad(myTexture, uv1, duvdx, duvdy).rgb;
-	vec3 G2 = textureGrad(myTexture, uv2, duvdx, duvdy).rgb;
-	vec3 G3 = textureGrad(myTexture, uv3, duvdx, duvdy).rgb;
+	vec4 G1 = textureGrad(myTexture, uv1, duvdx, duvdy);
+	vec4 G2 = textureGrad(myTexture, uv2, duvdx, duvdy);
+	vec4 G3 = textureGrad(myTexture, uv3, duvdx, duvdy);
 
 	// Variance-preserving blending
-	vec3 G = w1*G1 + w2*G2 + w3*G3;
+	vec4 G = w1*G1 + w2*G2 + w3*G3;
 	if (colourTransformationEnabled) {
-		G = (G - vec3(0.5)) * inversesqrt(w1*w1 + w2*w2 + w3*w3) + vec3(0.5);
+		G = (G - vec4(0.5)) * inversesqrt(w1*w1 + w2*w2 + w3*w3) + vec4(0.5);
+	}
+
+	if (channelVisualisationEnabled && gl_FragCoord.y < 400.0) {
+		float xm = mod(gl_FragCoord.x, 400.0);
+		if (xm < 100.0) {
+			G.gb = vec2(0.5);
+		} else if (xm < 200.0) {
+			G.rb = vec2(0.5);
+		} else if (xm < 300.0) {
+			G.rg = vec2(0.5);
+		}
 	}
 
 	// Compute LOD level to fetch the prefiltered look-up table invT
 	//~ float LOD = textureQueryLod(Tinput, uv).y / float(textureSize(invT, 0).y);
 
-	vec3 color;
+	vec4 col;
 	if (colourTransformationEnabled) {
-		color.r	= texture(colorLUT, vec2(G.r, 0.0)).r;
-		color.g	= texture(colorLUT, vec2(G.g, 0.0)).g;
-		color.b	= texture(colorLUT, vec2(G.b, 0.0)).b;
-		color = PerceptualToSRGB(inverseDecorrelation * color);
+		col.r	= texture(colorLUT, vec2(G.r, 0.0)).r;
+		col.g	= texture(colorLUT, vec2(G.g, 0.0)).g;
+		col.b	= texture(colorLUT, vec2(G.b, 0.0)).b;
+		col.rgb = PerceptualToLinear(inverseDecorrelation * col.rgb);
+		col.a	= texture(colorLUT, vec2(G.a, 0.0)).a;
 	} else {
-		color = LinearToSRGB(G);
+		col = G;
 	}
 
-	vec4 col;
-	col.rgb = color;
+	col = applyBackground(col);
+
+	col.rgb = LinearToSRGB(col.rgb);
+
 	FragColor = col;
 }

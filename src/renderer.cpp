@@ -102,7 +102,8 @@ void Renderer::render()
 	// Render the output to screen
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, m_width, m_height);
-	glClearColor(0.2f, 0.5f, 0.3f, 1.0f);
+	//~ glClearColor(0.2f, 0.5f, 0.3f, 1.0f);
+	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	std::array<float, 2> texture_resolution{
@@ -151,5 +152,8 @@ void Renderer::render()
 		m_grid_scaling);
 	m_shader_program_stochastic_sampling.setUniform(
 		"colourTransformationEnabled", m_colour_transformation_enabled);
+	m_shader_program_stochastic_sampling.setUniform(
+		"channelVisualisationEnabled",
+		m_channel_visualisation_enabled);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

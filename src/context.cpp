@@ -23,7 +23,8 @@ void Context::showHelp() const
 		"\n"
 		"Configuration:\n"
 		"	i:   Toggle between nearest neighbour and linear interpolation\n"
-		"	c:   Toggle histogram colour transformation\n"
+		"	c:   Toggle the histogram colour transformation\n"
+		"	v:   Toggle a colour channel visualisation\n"
 		"	s + Mouse drag and drop:   Adjust the grid scaling\n"
 	};
 	std::cout << helptext;
@@ -77,6 +78,9 @@ bool Context::loop()
 				break;
 			case 'c':
 				m_renderer.toggleColourTransformation();
+				break;
+			case 'v':
+				m_renderer.toggleChannelVisualisation();
 				break;
 			case 'h':
 				showHelp();

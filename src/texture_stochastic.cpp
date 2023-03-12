@@ -124,31 +124,29 @@ float3 srgb_to_oklab(const float3 &col_srgb)
 // Calculate a rotation matrix to decorrelate the colour channels
 float3x3 get_correlation_matrix(const std::vector<float4> &values)
 {
-	// Calculate the covariance matrix
-	float3 rgb_mean{0, 0, 0};
-	float3 rr_gg_bb_mean{0, 0, 0};
-	float3 rg_rb_gb_mean{0, 0, 0};
+	// Calculate the covariance matrix of the colours weighted with the
+	// transparency
+	float w_acc{0};
+	float3 mean{0, 0, 0};
 	for (const auto &v : values) {
 		const float3 &rgb{reinterpret_cast<const float3 &>(v)};
-		rgb_mean += rgb;
-		rr_gg_bb_mean += rgb * rgb;
-		float3 rg_rb_gb{rgb[0] * rgb[1], rgb[0] * rgb[2], rgb[1] * rgb[2]};
-		rg_rb_gb_mean += rg_rb_gb;
+		float weight{v[3]};
+		mean += weight * rgb;
+		w_acc += weight;
 	}
-	rgb_mean *= 1.0f / values.size();
-	rr_gg_bb_mean *= 1.0f / values.size();
-	rg_rb_gb_mean *= 1.0f / values.size();
-	float rm{rgb_mean[0]};
-	float gm{rgb_mean[1]};
-	float bm{rgb_mean[2]};
-	float rgm{rg_rb_gb_mean[0]};
-	float rbm{rg_rb_gb_mean[1]};
-	float gbm{rg_rb_gb_mean[2]};
-	double3x3 cov{
-		{rr_gg_bb_mean[0] - rm * rm, rgm - rm * gm, rbm - rm * bm},
-		{rgm - rm * gm, rr_gg_bb_mean[1] - gm * gm, gbm - gm * bm},
-		{rbm - rm * bm, gbm - gm * bm, rr_gg_bb_mean[3] - bm * bm},
-	};
+	mean /= w_acc;
+	float3x3 cov{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+	for (const auto &v : values) {
+		const float3 &rgb{reinterpret_cast<const float3 &>(v)};
+		float weight{v[3]};
+		float3 rgb_off{rgb - mean};
+		// m is rgb_off * transpose(rgb_off)
+		float3x3 m{rgb_off[0] * rgb_off, rgb_off[1] * rgb_off,
+			rgb_off[2] * rgb_off};
+		cov = cov + weight * m;
+	}
+	// For the eigenvectors, we can ignore this factor in the covariance matrix
+	// cov /= w_acc - 1.0f;
 
 	// Calculate the eigenvectors of the covariance matrix
 	double cov_tmp[3][3]{
@@ -199,14 +197,21 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 {
 	std::vector<float4> lut;
 	lut.resize(LUT_WIDTH);
-	const size_t num_pixels{values.size()};
-	// Determine a permutation for sorting
-	std::vector<int> perm;
-	perm.reserve(num_pixels);
-	for (size_t i{0}; i < num_pixels; ++i) {
-		perm.push_back(i);
+	// Initialize permutation arrays for sorting
+	std::vector<int> perm_visible, perm_all;
+	perm_visible.reserve(values.size());
+	perm_all.reserve(values.size());
+	for (size_t i{0}; i < values.size(); ++i) {
+		// Skip fully transparent pixels
+		if (values[i][3] > 0) {
+			perm_visible.push_back(i);
+		}
+		perm_all.push_back(i);
 	}
 	for (int c = 0; c < 4; ++c) {
+		// For the colour channels, exclude fully transparent pixels
+		std::vector<int> &perm{c < 3 ? perm_visible : perm_all};
+
 		// Sort perm such that values[perm[n]][c] < values[perm[n+1]][c]
 		// for all n, 0 <= n < values.size()
 		std::sort(perm.begin(), perm.end(), [&values, &c](int a, int b) {
@@ -215,12 +220,13 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 		// Create the LUT for the inverse histogram transformation
 		for (int k{0}; k < LUT_WIDTH; ++k) {
 			float U{CDF((k + 0.5f) / LUT_WIDTH, GAUSSIAN_AVERAGE, GAUSSIAN_STD)};
-			lut[k][c] = values[perm[static_cast<int>(floor(U * num_pixels))]][c];
+			int idx_perm{static_cast<int>(floor(U * perm.size()))};
+			lut[k][c] = values[perm[idx_perm]][c];
 		}
 
 		// Do the histogram transformation
-		for (size_t k{0}; k < num_pixels; ++k) {
-			float U = (k + 0.5f) / num_pixels;
+		for (size_t k{0}; k < perm.size(); ++k) {
+			float U = (k + 0.5f) / perm.size();
 			values[perm[k]][c] = invCDF(U, GAUSSIAN_AVERAGE, GAUSSIAN_STD);
 		}
 
