@@ -39,6 +39,15 @@ best results of the three for these example textures.
 
 It is possible to extend this demonstration with more not-yet-implemented
 features, for example:
+* Low discrepancy noise for the patch offsets.
+  If we replace the pcg3d PRNG in the shader by something with
+  low discrepancy, e.g. blue noise, there would be less low frequency in the
+  patch offsets.
+  Hypothetically, this means there are less clumps with visible tiling, so we
+  could make the grid coarser for the same tiling visibility.
+  A coarser grid means better preservation of patterns within the texture.
+  Pressing a key to toggle between low discrepancy and usual randomness could be
+  interesting for the user.
 * Arguments in the URL (HTTP parameters) and command-line.
   To showcase an example texture with stochastic texture sampling, it can be
   helpful to initialise the state of the application to a desired one.

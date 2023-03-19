@@ -91,26 +91,29 @@ void TriangleGrid(vec2 uv,
 	}
 }
 
+// Copied from https://www.shadertoy.com/view/XlGcRh and comments
+// http://www.jcgt.org/published/0009/03/02/
+uvec3 pcg3d(uvec3 v) {
 
-// Gold Noise ©2015 dcerisano@standard3d.com
-// - based on the Golden Ratio
-// - uniform normalized distribution
-// - fastest static noise generator function (also runs at low precision)
-// - use with indicated fractional seeding method
-const float PHI = 1.61803398874989484820459; // Φ = Golden Ratio
-float gold_noise(in vec2 xy, in float seed)
-{
-	return fract(tan(distance(xy*PHI, xy)*seed)*xy.x);
+    v = v * 1664525u + 1013904223u;
+
+    v.x += v.y*v.z;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+
+	v = ((v >> int((v >> 28u) + 4u)) ^ v) * 277803737u;
+    v ^= v >> 16u;
+
+    v.x += v.y*v.z;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+
+    return v;
 }
 
 vec2 hash(ivec2 p_i)
 {
-	vec2 p = vec2(p_i);
-	vec2 result;
-	result.x = gold_noise(p, 1.121421);
-	result.y = gold_noise(vec2(p.x, result.x), 1.0);
-	return result;
-	//~ return fract(sin((p) * mat2(127.1, 311.7, 269.5, 183.3) )*43758.5453);
+	return vec2(pcg3d(uvec3(p_i, 0)).xy) * exp2(-32.0);
 }
 
 
