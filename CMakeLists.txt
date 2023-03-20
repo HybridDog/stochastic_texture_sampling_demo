@@ -42,5 +42,5 @@ add_executable(Prog
 )
 target_include_directories(Prog PUBLIC src)
 
-target_link_libraries(Prog PUBLIC glfw SDL2 SDL2_image GL GLEW)
+target_link_libraries(Prog PUBLIC SDL2 SDL2_image GL GLEW)
 

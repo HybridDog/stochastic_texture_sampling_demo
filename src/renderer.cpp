@@ -96,7 +96,7 @@ void Renderer::render()
 			ImageFile img{m_image_to_load};
 			m_texture.loadImage(img);
 			m_texture_stochastic.loadImage(img);
-		} catch (std::runtime_error e) {
+		} catch (const std::runtime_error &e) {
 			std::cerr << e.what() << std::endl;;
 		}
 		m_image_to_load = "";
