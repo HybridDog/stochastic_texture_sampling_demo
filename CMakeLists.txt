@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(prog)
+project(stochastic_texture_sampling_demo)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -37,7 +37,7 @@ else()
 	find_package(SDL2_image REQUIRED)
 endif()
 
-add_executable(Prog
+add_executable(${PROJECT_NAME}
 	src/main.cpp
 	src/context.cpp
 	src/image_file.cpp
@@ -47,7 +47,7 @@ add_executable(Prog
 	src/texture.cpp
 	src/texture_stochastic.cpp
 )
-target_include_directories(Prog PUBLIC src)
+target_include_directories(${PROJECT_NAME} PUBLIC src)
 if(NOT EMSCRIPTEN)
-	target_link_libraries(Prog PUBLIC SDL2::SDL2 SDL2_image::SDL2_image GL GLEW)
+	target_link_libraries(${PROJECT_NAME} PUBLIC SDL2::SDL2 SDL2_image::SDL2_image GL GLEW)
 endif()
