@@ -49,17 +49,17 @@ jobs:
       - name: Install SDL2
         run: |
           sudo apt update
-          sudo apt install libsdl2-dev libsdl2-image-dev
+          sudo apt install libsdl2-dev libsdl2-image-dev libglew-dev
       - name: Build
         run: |
           emcmake cmake -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always" -G Ninja -B build_emscripten
           cmake --build build_emscripten
+          mkdir _site
+          mv build_emscripten/stochastic_texture_sampling_demo.html _site/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
-        with:
-          path: 'build_emscripten/Prog.html'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
