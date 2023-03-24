@@ -145,9 +145,29 @@ void main()
 	vec4 G2 = textureGrad(myTexture, uv2, duvdx, duvdy);
 	vec4 G3 = textureGrad(myTexture, uv3, duvdx, duvdy);
 
-	// Variance-preserving blending
-	vec4 G = w1*G1 + w2*G2 + w3*G3;
+	// Change the weights according to transparency
+	vec3 weights_alpha = vec3(G1.a, G2.a, G3.a);
+	float num_visible = dot(weights_alpha, vec3(1.0));
+	if (num_visible == 0.0) {
+		// Special case: fully transparent
+		vec4 col = applyBackground(vec4(0.0));
+		col.rgb = LinearToSRGB(col.rgb);
+		FragColor = col;
+		return;
+	}
+	vec3 weights = vec3(w1, w2, w3) * weights_alpha;
+	float visibility = dot(weights, vec3(1.0));
+	weights = weights / dot(weights, vec3(1.0));
+	w1 = weights.x;
+	w2 = weights.y;
+	w3 = weights.z;
+
+	// Variance-preserving blending, except alpha
+	//~ vec4 G = w1*G1 + w2*G2 + w3*G3;
+	vec4 G = vec4(w1*G1.rgb + w2*G2.rgb + w3*G3.rgb, visibility);
 	if (colourTransformationEnabled) {
+		//~ G.rgb = (G.rgb - vec3(0.5)) * inversesqrt(w1*w1 + w2*w2 + w3*w3)
+			//~ + vec3(0.5);
 		G = (G - vec4(0.5)) * inversesqrt(w1*w1 + w2*w2 + w3*w3) + vec4(0.5);
 	}
 
@@ -171,10 +191,14 @@ void main()
 		col.g	= texture(colorLUT, vec2(G.g, 0.0)).g;
 		col.b	= texture(colorLUT, vec2(G.b, 0.0)).b;
 		col.rgb = PerceptualToLinear(inverseDecorrelation * col.rgb);
-		col.a	= texture(colorLUT, vec2(G.a, 0.0)).a;
 	} else {
-		col = G;
+		col.rgb = G.rgb;
 	}
+	col.a = G.a;
+	if (col.a < 0.5)
+		col.a = 0.0;
+	else
+		col.a = 1.0;
 
 	col = applyBackground(col);
 

@@ -193,9 +193,9 @@ void decorrelate_colours(std::vector<float4> &values,
 constexpr float GAUSSIAN_AVERAGE{0.5f};
 constexpr float GAUSSIAN_STD{0.16666f};
 
-std::vector<float4> histogram_transformation(std::vector<float4> &values)
+std::vector<float3> histogram_transformation(std::vector<float4> &values)
 {
-	std::vector<float4> lut;
+	std::vector<float3> lut;
 	lut.resize(LUT_WIDTH);
 	// Initialize permutation arrays for sorting
 	std::vector<int> perm_visible, perm_all;
@@ -208,7 +208,7 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 		}
 		perm_all.push_back(i);
 	}
-	for (int c = 0; c < 4; ++c) {
+	for (int c = 0; c < 3; ++c) {
 		// For the colour channels, exclude fully transparent pixels
 		std::vector<int> &perm{c < 3 ? perm_visible : perm_all};
 
@@ -277,15 +277,15 @@ void TextureStochastic::loadImage(const ImageFile &img)
 
 	// Decorrelate the colours and perform the histogram transformations
 	decorrelate_colours(pixels, m_inverse_decorrelation);
-	std::vector<float4> lut{histogram_transformation(pixels)};
+	std::vector<float3> lut{histogram_transformation(pixels)};
 
 	// Upload to GPU
 	bind();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_width, m_height, 0,
 		GL_RGBA, GL_FLOAT, pixels.data());
 	bind_lut();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, LUT_WIDTH, 1, 0,
-		GL_RGBA, GL_FLOAT, lut.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, LUT_WIDTH, 1, 0,
+		GL_RGB, GL_FLOAT, lut.data());
 }
 
 void TextureStochastic::setInterpolation(bool enable_interpolation) const
