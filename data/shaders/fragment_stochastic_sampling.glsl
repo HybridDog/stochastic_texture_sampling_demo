@@ -116,12 +116,8 @@ vec2 hash(ivec2 p_i)
 	return vec2(pcg3d(uvec3(p_i, 0)).xy) * exp2(-32.0);
 }
 
-
-void main()
+vec4 sample_texture(vec2 uv)
 {
-	vec2 uv = pos0 + gl_FragCoord.xy / scale;
-	uv.y = -uv.y * textureResolution.x / textureResolution.y;
-
 	// Get triangle info
 	float w1, w2, w3;
 	ivec2 vertex1, vertex2, vertex3;
@@ -175,6 +171,15 @@ void main()
 	} else {
 		col = G;
 	}
+	return col;
+}
+
+void main()
+{
+	vec2 uv = pos0 + gl_FragCoord.xy / scale;
+	uv.y = -uv.y * textureResolution.x / textureResolution.y;
+
+	vec4 col = sample_texture(uv);
 
 	col = applyBackground(col);
 

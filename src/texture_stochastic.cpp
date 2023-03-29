@@ -208,6 +208,9 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 		}
 		perm_all.push_back(i);
 	}
+	if (perm_visible.size() < 1)
+		// No visible pixels -> do nothing
+		return lut;
 	for (int c = 0; c < 4; ++c) {
 		// For the colour channels, exclude fully transparent pixels
 		std::vector<int> &perm{c < 3 ? perm_visible : perm_all};
