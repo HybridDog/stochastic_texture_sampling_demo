@@ -259,6 +259,56 @@ TextureStochastic::TextureStochastic(bool enable_interpolation)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
+// Reduce the bit depth and move the LUT colours in the [0,1] range
+void quantize(const std::vector<float4> &pixels, const std::vector<float4> &lut,
+	std::vector<byte3> &pixels_quantized, std::vector<byte3> &lut_quantized,
+	std::array<float, 9> &inv_transform, std::array<float, 3> &col_translation)
+{
+	// Quantize pixel values
+	pixels_quantized.reserve(pixels.size());
+	for (const auto &pix4 : pixels) {
+		float3 pix{pix4[0], pix4[1], pix4[2]};
+		for (int i{0}; i < 3; ++i) {
+			pix[i] = std::clamp(pix[i], 0.0f, 1.0f);
+		}
+		pixels_quantized.emplace_back(pix * 255.0f);
+	}
+
+	// Transformation to move LUT colour values back to their original domain
+	float3 lutmin{lut[0][0], lut[0][1], lut[0][2]};
+	float3 lutmax{lutmin};
+	for (const auto &pix : lut) {
+		for (int i{0}; i < 3; ++i) {
+			lutmin[i] = std::min(lutmin[i], pix[i]);
+			lutmax[i] = std::max(lutmax[i], pix[i]);
+		}
+	}
+	float3 scaling{lutmax - lutmin};
+	for (int i{0}; i < 3; ++i) {
+		if (scaling[i] == 0.0f)
+			// LUT has a single colour
+			scaling[i] = 1.0f;
+	}
+	for (int i{0}; i < 3; ++i) {
+		col_translation[i] = lutmin[i] / scaling[i];
+		// inv_transform is column-major
+		for (int j{0}; j < 3; ++j) {
+			// Multiply the column corresponding to the LUT channel i by the
+			// scaling
+			inv_transform[3 * i + j] = inv_transform[3 * i + j] * scaling[i];
+		}
+	}
+
+	// Move LUT colour values to [0,1] and quantize
+	lut_quantized.reserve(lut.size());
+	for (const auto &pix4 : lut) {
+		float3 pix{pix4[0], pix4[1], pix4[2]};
+		pix = (pix - lutmin) / scaling;
+		lut_quantized.emplace_back(pix * 255.0f);
+	}
+}
+
+
 void TextureStochastic::loadImage(const ImageFile &img)
 {
 	m_width = img.getWidth();
@@ -282,13 +332,19 @@ void TextureStochastic::loadImage(const ImageFile &img)
 	decorrelate_colours(pixels, m_inverse_decorrelation);
 	std::vector<float4> lut{histogram_transformation(pixels)};
 
+	// Quantize pixels
+	std::vector<byte3> pixels_quantized;
+	std::vector<byte3> lut_quantized;
+	quantize(pixels, lut, pixels_quantized, lut_quantized,
+		m_inverse_decorrelation, m_col_translation);
+
 	// Upload to GPU
 	bind();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_width, m_height, 0,
-		GL_RGBA, GL_FLOAT, pixels.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0,
+		GL_RGB, GL_UNSIGNED_BYTE, pixels_quantized.data());
 	bind_lut();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, LUT_WIDTH, 1, 0,
-		GL_RGBA, GL_FLOAT, lut.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, LUT_WIDTH, 1, 0,
+		GL_RGB, GL_UNSIGNED_BYTE, lut_quantized.data());
 }
 
 void TextureStochastic::setInterpolation(bool enable_interpolation) const

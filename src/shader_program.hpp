@@ -33,6 +33,9 @@ public:
 	void setUniform(const std::string &name, std::array<float, 2> &vec) const
 		{ glUniform2f(glGetUniformLocation(m_shader_program, name.c_str()),
 			vec[0], vec[1]); };
+	void setUniform(const std::string &name, std::array<float, 3> &vec) const
+		{ glUniform3f(glGetUniformLocation(m_shader_program, name.c_str()),
+			vec[0], vec[1], vec[2]); };
 	void setUniform(const std::string &name, std::array<float, 9> &m) const
 		{ glUniformMatrix3fv(glGetUniformLocation(m_shader_program, name.c_str()),
 			1, false, m.data()); };

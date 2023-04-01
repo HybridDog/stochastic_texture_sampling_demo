@@ -150,6 +150,8 @@ void Renderer::render()
 	m_shader_program_stochastic_sampling.setUniform("scale", m_camera.getZoom());
 	m_shader_program_stochastic_sampling.setUniform("inverseDecorrelation",
 		m_texture_stochastic.getInverseDecorrelation());
+	m_shader_program_stochastic_sampling.setUniform("colTranslation",
+		m_texture_stochastic.getColTranslation());
 	m_shader_program_stochastic_sampling.setUniform("interpolationEnabled",
 		m_interpolation_enabled);
 	m_shader_program_stochastic_sampling.setUniform("gridScaling",

@@ -8,6 +8,7 @@ uniform vec2 textureResolution;
 uniform vec2 pos0;
 uniform float scale;
 uniform mat3 inverseDecorrelation;
+uniform vec3 colTranslation;
 uniform bool interpolationEnabled;
 uniform bool colourTransformationEnabled;
 uniform bool channelVisualisationEnabled;
@@ -166,7 +167,8 @@ vec4 sample_texture(vec2 uv)
 		col.r	= texture(colorLUT, vec2(G.r, 0.0)).r;
 		col.g	= texture(colorLUT, vec2(G.g, 0.0)).g;
 		col.b	= texture(colorLUT, vec2(G.b, 0.0)).b;
-		col.rgb = PerceptualToLinear(inverseDecorrelation * col.rgb);
+		col.rgb = PerceptualToLinear(
+			inverseDecorrelation * (col.rgb + colTranslation));
 		col.a	= texture(colorLUT, vec2(G.a, 0.0)).a;
 	} else {
 		col = G;

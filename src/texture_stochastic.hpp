@@ -23,6 +23,7 @@ public:
 	void bind() const { glBindTexture(GL_TEXTURE_2D, m_id); }
 	void bind_lut() const { glBindTexture(GL_TEXTURE_2D, m_lut_id); }
 	std::array<float, 9> &getInverseDecorrelation() { return m_inverse_decorrelation; }
+	std::array<float, 3> &getColTranslation() { return m_col_translation; }
 	void setInterpolation(bool enable_interpolation) const;
 
 private:
@@ -31,5 +32,6 @@ private:
 	int m_width{0};
 	int m_height{0};
 	std::array<float, 9> m_inverse_decorrelation{1,0,0, 0,1,0, 0,0,1};
+	std::array<float, 3> m_col_translation{0, 0, 0};
 };
 
