@@ -48,6 +48,17 @@ features, for example:
   A coarser grid means better preservation of patterns within the texture.
   Pressing a key to toggle between low discrepancy and usual randomness could be
   interesting for the user.
+* Automatically set a good grid scaling using a heuristic.
+  In my experience so far, if the texture has many low frequency parts, a coarse
+  grid scaling looks better whereas if the texure consists of only high
+  frequency parts, the grid scaling can be configured to be finer without
+  altering the look of the texture a lot.
+  It should be possible to do a Wavelet or Fourier transformation on the
+  gaussianized texture to determine the frequencies and use the low frequency
+  amplitudes for a grid scaling value heuristic.
+  Determining the frequencies after the histogram transformations (i.e. on the
+  gaussianized texture) should give better results than using the input texture
+  since the heuristic should be independent of the global contrast, color, etc.
 * Arguments in the URL (HTTP parameters) and command-line.
   To showcase an example texture with stochastic texture sampling, it can be
   helpful to initialise the state of the application to a desired one.
