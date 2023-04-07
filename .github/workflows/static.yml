@@ -41,6 +41,7 @@ jobs:
           key: emscripten-${{ runner.os }}
       - uses: mymindstorm/setup-emsdk@v11
         with:
+          version: 3.1.31
           actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
       - name: Setup Ninja
         uses: ashutoshvarma/setup-ninja@master
