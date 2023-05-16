@@ -13,7 +13,7 @@ using namespace linalg::aliases;
 namespace {
 
 // Lookup table size
-constexpr int LUT_WIDTH{128};
+constexpr int LUT_WIDTH{1024};
 
 // math functions copy-pasted from the official demo
 
