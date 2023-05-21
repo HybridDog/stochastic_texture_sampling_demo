@@ -17,22 +17,6 @@ constexpr int LUT_WIDTH{1024};
 
 // math functions copy-pasted from the official demo
 
-float Erf(float x)
-{
-	// Save the sign of x
-	int sign = 1;
-	if (x < 0)
-		sign = -1;
-	x = abs(x);
-
-	// A&S formula 7.1.26
-	float t = 1.0f / (1.0f + 0.3275911f * x);
-	float y = 1.0f - (((((1.061405429f * t + -1.453152027f) * t) + 1.421413741f)
-		* t + -0.284496736f) * t + 0.254829592f) * t * exp(-x * x);
-
-	return sign * y;
-}
-
 float ErfInv(float x)
 {
 	float w, p;
@@ -66,15 +50,24 @@ float ErfInv(float x)
 	return p * x;
 }
 
-float CDF(float x, float mu, float sigma)
+constexpr float GAUSSIAN_AVERAGE{0.5f};
+constexpr float GAUSSIAN_STD{0.116666f};
+
+// Truncated gaussian CDF defined on x in [0,1]
+float CDF(float x)
 {
-	float U = 0.5f * (1 + Erf((x-mu)/(sigma*sqrtf(2.0f))));
+	float C_SIGMA{1.0f / std::erf(0.5f / (GAUSSIAN_STD * sqrtf(2.0f)))};
+	float U = 0.5f * (1 + C_SIGMA * std::erf((x - GAUSSIAN_AVERAGE)
+		/ (GAUSSIAN_STD * sqrtf(2.0f))));
 	return U;
 }
 
-float invCDF(float U, float mu, float sigma)
+// Truncated gaussian inverse CDF defined on U in [0,1]
+float invCDF(float U)
 {
-	float x = sigma*sqrtf(2.0f) * ErfInv(2.0f*U-1.0f) + mu;
+	float C_SIGMA{1.0f / std::erf(0.5f / (GAUSSIAN_STD * sqrtf(2.0f)))};
+	float x = GAUSSIAN_STD * sqrtf(2.0f) * ErfInv((2.0f * U - 1.0f)
+		* (1.0f / C_SIGMA)) + GAUSSIAN_AVERAGE;
 	return x;
 }
 
@@ -190,9 +183,6 @@ void decorrelate_colours(std::vector<float4> &values,
 		inv[2][0], inv[2][1], inv[2][2]};
 }
 
-constexpr float GAUSSIAN_AVERAGE{0.5f};
-constexpr float GAUSSIAN_STD{0.16666f};
-
 std::vector<float4> histogram_transformation(std::vector<float4> &values)
 {
 	std::vector<float4> lut;
@@ -222,7 +212,7 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 
 		// Create the LUT for the inverse histogram transformation
 		for (int k{0}; k < LUT_WIDTH; ++k) {
-			float U{CDF((k + 0.5f) / LUT_WIDTH, GAUSSIAN_AVERAGE, GAUSSIAN_STD)};
+			float U{CDF((k + 0.5f) / LUT_WIDTH)};
 			int idx_perm{static_cast<int>(floor(U * perm.size()))};
 			lut[k][c] = values[perm[idx_perm]][c];
 		}
@@ -230,9 +220,8 @@ std::vector<float4> histogram_transformation(std::vector<float4> &values)
 		// Do the histogram transformation
 		for (size_t k{0}; k < perm.size(); ++k) {
 			float U = (k + 0.5f) / perm.size();
-			values[perm[k]][c] = invCDF(U, GAUSSIAN_AVERAGE, GAUSSIAN_STD);
+			values[perm[k]][c] = invCDF(U);
 		}
-
 	}
 	return lut;
 }

@@ -34,6 +34,14 @@ With sRGB, which is what the demonstration of Thomas Deliot et al. uses, these
 problems are less visible, and a perceptual colour space appears to give the
 best results of the three for these example textures.
 
+Instead of a gaussian distribution, this application uses the truncated
+gaussian distribution and soft-clipping contrast operator
+explained in [On Histogram-preserving Blending for Randomized Texture
+Tiling](https://jcgt.org/published/0008/04/02/).
+With a simple gaussian distribution, the lookup table works badly: the first and
+last entry do not correspond to the highest and lowest value of the sorted
+channel values, which results in visible clipping artifacts.
+
 
 ## Missing Features
 
@@ -81,5 +89,22 @@ features, for example:
   emscripten.
   With SDL2 drag and drop, it should also be possible to do this without a
   browser.
+* "exponentiated blending" from
+  "On Histogram-preserving Blending for Randomized Texture Tiling"
 
 Pull requests are welcome.
+
+
+# TODO
+
+* The default "press h" texture histogram transformation reversal does not give
+  the original texture; with nearest neighbour interpolation, there are some
+  wrong pixels.
+  This can be tested with adjusted weights in the shader:
+  ```
+  w1 = 1.0;
+  w2 = 0.0;
+  w3 = 0.0;
+  ```
+* With a space texture which is black except for a few stars or a green meadow
+  texture with a single small violet flower, there are visible artifacts.

@@ -116,6 +116,38 @@ vec2 hash(ivec2 p_i)
 	return vec2(pcg3d(uvec3(p_i, 0)).xy) * exp2(-32.0);
 }
 
+// soft-clipping contrast operator from
+// "On Histogram-preserving Blending for Randomized Texture Tiling"
+float s_scalar_part(float x, float w)
+{
+	if (x >= (2.0 - w) / 4.0) {
+		return 1.0 / w * (x - 0.5) + 0.5;
+	}
+	if (w >= 2.0 / 3.0) {
+		float v = x / (2.0 - w);
+		return 8.0 * (1.0 / w - 1.0) * v * v + (3.0 - 2.0 / w) * v;
+	}
+	if (x >= (2.0 - 3.0 * w) / 4.0) {
+		float v = x - (2.0 - 3.0 * w) / 4.0;
+		return 1.0 / (w * w) * v * v;
+	}
+	return 0.0;
+}
+
+float s_scalar(float x, float w)
+{
+	if (x > 0.5) {
+		return 1.0 - s_scalar_part(1.0 - x, w);
+	}
+	return s_scalar_part(x, w);
+}
+
+vec4 s(vec4 x, float w)
+{
+	return vec4(s_scalar(x.x, w), s_scalar(x.y, w), s_scalar(x.z, w),
+		s_scalar(x.w, w));
+}
+
 vec4 sample_texture(vec2 uv)
 {
 	// Get triangle info
@@ -144,7 +176,7 @@ vec4 sample_texture(vec2 uv)
 	// Variance-preserving blending
 	vec4 G = w1*G1 + w2*G2 + w3*G3;
 	if (colourTransformationEnabled) {
-		G = (G - vec4(0.5)) * inversesqrt(w1*w1 + w2*w2 + w3*w3) + vec4(0.5);
+		G = s(G, sqrt(w1*w1 + w2*w2 + w3*w3));
 	}
 
 	if (channelVisualisationEnabled && gl_FragCoord.y < 400.0) {
